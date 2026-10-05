@@ -1,0 +1,21 @@
+{
+  "track": "KR-JSC",
+  "version": "0.1",
+  "updated": "2026-10-05",
+  "note": "화면에서 만드는 고객 문서. 틀은 tools/templates 의 docx({{빈칸}})이고 tools/docgen.py 와 같은 틀을 쓴다. fits 가 거짓이면 화면에 '이 틀은 맞지 않을 수 있음'을 확인필요로 표시한다.",
+  "documents": [
+    {
+      "id": "request",
+      "label": "자료요청서 (필요 정보 및 서류 안내)",
+      "step": "P2-1",
+      "templates": {"zh": "tools/templates/request_zh.docx", "ko": "tools/templates/request_ko.docx"},
+      "names": {
+        "ko": "한국자회사설립_필요정보및서류안내_{short}_KR_{ymd}.docx",
+        "zh": "韩国子公司设立所需信息及文件清单_{short}_CN_{ymd}.docx"
+      },
+      "fits": "shareholder_type == 'cn_company_direct'",
+      "fits_note": "이 자료요청서 틀은 중국 법인 직접 출자용입니다. 다른 주주 유형용 틀은 아직 없습니다.",
+      "status": "pilot"
+    }
+  ]
+}

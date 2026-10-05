@@ -32,7 +32,7 @@
   --kr:#8FAEEB; --cn:#E0B160; --focus:#8FAEEB; --mute-bg:#222A38;
   --bar:#1B2740; --bar-ink:#E6EAF2;
 }
-*,*::before,*::after{box-sizing:inherit}
+*,*::before,*::after{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--paper);color:var(--ink);
   font-family:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR",sans-serif;
@@ -55,7 +55,7 @@ section{background:var(--sheet);border:1px solid var(--line);border-radius:14px;
 .opts button[aria-pressed="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
 .opts button:disabled{color:var(--ink2);background:var(--mute-bg);cursor:not-allowed}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-input[type=number],input[type=text],input[type=search],input[type=password]{font:inherit;color:var(--ink);background:var(--sheet);border:1px solid var(--line);
+input[type=number],input[type=text],input[type=search],input[type=password],input[type=url],input[type=date]{font:inherit;color:var(--ink);background:var(--sheet);border:1px solid var(--line);
   border-radius:10px;padding:9px 12px;min-height:44px;width:100%;max-width:280px}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .echo{color:var(--ink2);font-size:.9rem}
@@ -103,6 +103,8 @@ input[type=number],input[type=text],input[type=search],input[type=password]{font
 .got{font:inherit;font-size:.8rem;font-weight:600;border:1px solid var(--line);background:var(--sheet);color:var(--ink2);border-radius:999px;padding:4px 12px;min-height:32px;margin-top:6px;cursor:pointer}
 .got[aria-pressed="true"]{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
 .act.ghost{background:var(--mute-bg);color:var(--ink)}
+.dir{min-height:110px}.dir b{font-size:1.35rem}
+.files{margin-top:12px}.files .row{margin-top:8px}
 .ta{font:inherit;width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--sheet);color:var(--ink)}
 .sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .sum div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
@@ -156,17 +158,21 @@ tfoot td{font-weight:700;border-bottom:0}
     <div id="c-list"></div>
   </div>
 
-  <!-- 새 사건 -->
+  <!-- 새 사건: 큰 방향부터 차례로 고른다 -->
   <div class="view" id="v-new">
     <div class="sub"><a class="back" href="#cases">‹ 사건</a><h2>새 사건</h2></div>
-    <section>
+    <section><h3>1. 어느 방향인가요</h3><div class="grid" id="n-dir" style="margin-top:10px"></div></section>
+    <section id="n-s2" hidden><h3>2. 무엇을 세우나요</h3><div class="opts" id="n-track" style="margin-top:10px"></div><div id="n-tmsg"></div></section>
+    <section id="n-s3" hidden><h3>3. 누가 출자하나요</h3><div class="opts" id="n-sh" style="margin-top:10px"></div></section>
+    <section id="n-s4" hidden>
+      <h3>4. 사건 정보</h3>
       <div class="q"><label for="n-name">사건명</label><input id="n-name" type="text" placeholder="예: OO 한국 자회사 설립" style="max-width:none"></div>
-      <div class="q"><label for="n-client">고객사 (의뢰인)</label><input id="n-client" type="text" style="max-width:none"></div>
+      <div class="q"><label for="n-client">고객사 (국문 또는 통칭)</label><input id="n-client" type="text" style="max-width:none"></div>
+      <div class="q"><label for="n-client-cn">고객사 중문 정식 명칭 (자료요청서에 들어갑니다)</label><input id="n-client-cn" type="text" style="max-width:none"></div>
       <div class="q"><label for="n-drive">드라이브 사건 폴더 링크 (나중에 넣어도 됩니다)</label><input id="n-drive" type="url" placeholder="https://drive.google.com/drive/folders/..." autocapitalize="off" style="max-width:none"></div>
-      <div class="q"><span class="lab">설립 유형</span><div class="opts" id="n-track"></div></div>
-      <button class="act" id="n-go" type="button">만들고 기본 정보 입력</button>
+      <button class="act" id="n-go" type="button">사건 만들기</button>
       <div id="n-msg"></div>
-      <p class="hint" style="margin-top:12px">사건 자료는 이 기기와, 더보기에서 연결한 비공개 GitHub 저장소에만 저장됩니다.</p>
+      <p class="hint" style="margin-top:12px">사건 기록은 이 기기와, 더보기에서 연결한 비공개 GitHub 저장소에만 저장됩니다. 고객 서류 파일은 드라이브 사건 폴더에 둡니다.</p>
     </section>
   </div>
 
@@ -175,6 +181,19 @@ tfoot td{font-weight:700;border-bottom:0}
     <div class="sub"><a class="back" href="#cases">‹ 사건</a><h2>사건 상세</h2></div>
     <div id="k-head"></div>
     <div id="k-drive"></div>
+    <details id="r-box" style="margin-top:16px"><summary style="cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center">📨 자료요청서 만들기</summary>
+      <section style="margin-top:6px">
+        <div id="r-fit"></div>
+        <div class="q"><label for="r-cn">고객사 중문 정식 명칭</label><input id="r-cn" data-cf="client_cn" type="text" style="max-width:100%"></div>
+        <div class="q"><label for="r-short">약칭 (파일 이름에 씁니다)</label><input id="r-short" data-cf="client_short" type="text"></div>
+        <div class="q"><label for="r-due">회신 기한</label><input id="r-due" data-cf="reply_by" type="date"></div>
+        <div class="q"><span class="lab">다른 출자 후보 (있을 때만)</span>
+          <div class="row"><input id="r-alt-ko" data-cf="alt_ko" type="text" placeholder="국문 예: 홍콩 법인"><input id="r-alt-zh" data-cf="alt_zh" type="text" placeholder="중문 예: 香港公司"></div>
+          <p class="hint">고객이 출자 주체를 고를 수 있게 요청서에 선택지로 넣습니다.</p></div>
+        <button class="act" id="r-make" type="button">중문·국문 자료요청서 만들기</button>
+        <div id="r-out"></div>
+      </section>
+    </details>
     <div id="k-warns"></div>
     <h3 style="margin-top:20px">다음 할 일</h3>
     <div id="k-next"></div>
@@ -237,7 +256,7 @@ tfoot td{font-weight:700;border-bottom:0}
     <div class="sub"><a class="back" data-ctx="1" href="#guide">‹ 완료</a><h2>설립 유형과 기본 정보</h2></div>
     <section aria-labelledby="h-track">
       <h2 id="h-track">어떤 설립인가요</h2>
-      <div class="q"><span class="lab">어디에 세우나요</span><div class="opts" id="o-where"></div></div>
+      <div class="q"><span class="lab">어느 방향인가요</span><div class="opts" id="o-where"></div></div>
       <div class="q"><span class="lab">무엇을 세우나요</span><div class="opts" id="o-what"></div></div>
       <div id="track-msg"></div>
     </section>
@@ -330,7 +349,7 @@ function evalExpr(src,vars){
 function when(expr,vars){return !expr||expr==="always"?true:!!evalExpr(expr,vars)}
 
 /* ---------- 데이터 읽기 ---------- */
-var FILES=["inputs","rules","process","documents","agencies","costs"];
+var FILES=["inputs","rules","process","documents","agencies","costs","outputs"];
 function getJSON(u){return fetch(u,{cache:"no-cache"}).then(function(r){if(!r.ok)throw Error(u+" ("+r.status+")");return r.json()})}
 function fetchAll(){
  return getJSON("data/tracks.json").then(function(tr){
@@ -457,10 +476,11 @@ function warnings(c){
 }
 
 /* ---------- 렌더 ---------- */
+function dirs(){return D.tracks.directions||D.tracks.where.map(function(w){return {id:w.id,where:w.id,label:w.label,desc:""}})}
 function tracksAt(where){return D.tracks.tracks.filter(function(t){return t.where===where})}
 function renderTrack(){
  var tr=null;D.tracks.tracks.forEach(function(t){if(t.id===TRACK)tr=t});
- $("o-where").innerHTML=D.tracks.where.map(function(w){return '<button type="button" data-where="'+esc(w.id)+'" aria-pressed="'+(tr&&tr.where===w.id)+'">'+esc(w.label)+'</button>'}).join("");
+ $("o-where").innerHTML=dirs().map(function(w){return '<button type="button" data-where="'+esc(w.where)+'" aria-pressed="'+(tr&&tr.where===w.where)+'">'+esc(w.label)+'</button>'}).join("");
  $("o-what").innerHTML=tracksAt(tr?tr.where:"").map(function(t){return '<button type="button" data-track="'+esc(t.id)+'" aria-pressed="'+(t.id===TRACK)+'">'+esc(t.label)+'</button>'}).join("");
  $("guide").hidden=!T;
  $("track-msg").innerHTML=tr?(T?'<p class="note">'+esc(tr.note)+'</p>':'<p class="warn">'+esc(tr.note||"준비 중입니다.")+'</p>'):'';
@@ -597,7 +617,7 @@ function renderGuide(c,p){
 /* ---------- 사건 ----------
    사건은 STORE.cases 에 두고 이 기기(localStorage)와 비공개 GitHub 저장소의 cases.json 에 저장한다.
    지운 사건은 {id, deleted, updated} 만 남겨 다른 기기에도 지워지게 한다. */
-var STORE={cases:[]}, CUR=null, GUIDE={track:null,V:null,fees:{}}, CF="active", NEWTRACK=null;
+var STORE={cases:[]}, CUR=null, GUIDE={track:null,V:null,fees:{}}, CF="active";
 function nowISO(){return new Date().toISOString()}
 function today(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
 function liveCases(){return STORE.cases.filter(function(x){return !x.deleted})}
@@ -617,6 +637,7 @@ function useTrack(id,vals){
 function enterGuide(){if(CUR===null&&V===GUIDE.V)return;CUR=null;useTrack(GUIDE.track,GUIDE.V);GUIDE.V=V;FEE=GUIDE.fees}
 function enterCase(cs,force){
  if(!force&&CUR===cs.id&&V===cs.inputs)return;
+ if(CUR!==cs.id){$("r-box").open=!(cs.steps||{})["P2-1"];GEN={id:null,files:null}}
  CUR=cs.id;useTrack(cs.track,cs.inputs);cs.inputs=V;cs.fees=cs.fees||{};FEE=cs.fees;
 }
 function selectTrack(id){
@@ -658,12 +679,21 @@ function renderCases(){
   return '<a class="item" href="#case-'+esc(cs.id)+'"><div><b>'+esc(cs.name||"(이름 없음)")+'</b><span class="small">'+esc(trackTitle(cs.track)+(cs.client?" · "+cs.client:""))+'</span></div><span class="pct">'+pctOf(progressOf(cs))+'% ›</span></a>';
  }).join(""):'<p class="note">'+(q?'검색 결과가 없습니다.':CF==="done"?'완료한 사건이 없습니다.':'진행 중인 사건이 없습니다. ＋ 추가로 새 사건을 만드세요.')+'</p>';
 }
+var NEW={dir:null,track:null,sh:null};
+function shInput(Tt){var r=null;(Tt?Tt.inputs.inputs:[]).forEach(function(i){if(i.key==="shareholder_type")r=i});return r}
 function renderNew(){
- var ready=D.tracks.tracks.filter(function(t){return t.ready&&D.data[t.id]});
- if(!NEWTRACK&&ready[0])NEWTRACK=ready[0].id;
- $("n-track").innerHTML=ready.map(function(t){return '<button type="button" data-ntrack="'+esc(t.id)+'" aria-pressed="'+(t.id===NEWTRACK)+'">'+esc(trackTitle(t.id))+'</button>'}).join("")
-  +'<p class="hint" style="width:100%">다른 유형은 규칙 데이터를 넣은 뒤 열립니다.</p>';
+ $("n-dir").innerHTML=dirs().map(function(d){return '<button type="button" class="card dir" data-ndir="'+esc(d.id)+'" style="--c:var('+(NEW.dir===d.id?'--kr':'--ink2')+')'+(NEW.dir&&NEW.dir!==d.id?';opacity:.6':'')+'" aria-pressed="'+(NEW.dir===d.id)+'"><span class="k">'+esc(d.label)+'</span><span class="s">'+esc(d.desc)+'</span></button>'}).join("");
+ var d=null;dirs().forEach(function(x){if(x.id===NEW.dir)d=x});
+ $("n-s2").hidden=!d;
+ if(d)$("n-track").innerHTML=tracksAt(d.where).map(function(t){return '<button type="button" data-ntrack="'+esc(t.id)+'" aria-pressed="'+(t.id===NEW.track)+'">'+esc(t.label)+(t.ready&&D.data[t.id]?'':' (준비 중)')+'</button>'}).join("");
+ var tr=NEW.track&&trackOf(NEW.track), Tt=tr&&tr.ready&&D.data[tr.id];
+ $("n-tmsg").innerHTML=tr&&!Tt?'<p class="warn">'+esc(tr.note||"준비 중입니다.")+'</p>':'';
+ var si=shInput(Tt);
+ $("n-s3").hidden=!(Tt&&si);
+ if(Tt&&si)$("n-sh").innerHTML=si.options.map(function(o){return '<button type="button" data-nsh="'+esc(o.value)+'" aria-pressed="'+(o.value===NEW.sh)+'">'+esc(o.label)+'</button>'}).join("");
+ $("n-s4").hidden=!(Tt&&(!si||NEW.sh));
 }
+function addDays(n){var d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
 function renderCaseDash(c,p){
  var cs=curCase();if(!cs)return;
  var pr=progressOf(cs), pct=pctOf(pr);
@@ -675,6 +705,10 @@ function renderCaseDash(c,p){
  $("k-next").innerHTML=pr.next.length?todoHtml(cs,pr.next.slice(0,3),false,"#proc"):'<p class="note">남은 절차가 없습니다.</p>';
  $("k-grid").innerHTML=T&&c?cardsHtml(c,p,cs):"";
  [["name","k-name"],["client","k-client"],["memo","k-memo"],["drive","k-drive-in"]].forEach(function(f){var el=$(f[1]);if(document.activeElement!==el)el.value=cs[f[0]]||""});
+ [["client_cn","r-cn"],["client_short","r-short"],["reply_by","r-due"],["alt_ko","r-alt-ko"],["alt_zh","r-alt-zh"]].forEach(function(f){var el=$(f[1]);if(document.activeElement!==el)el.value=cs[f[0]]||""});
+ var od=outDoc("request");
+ $("r-fit").innerHTML=!od?'<p class="warn">이 설립 유형에는 자료요청서 틀이 아직 없습니다.</p>':(c&&od.fits&&!when(od.fits,c)?'<p class="warn">'+esc(od.fits_note)+tagChk()+'</p>':'');
+ if(!GEN.files||GEN.id!==cs.id)$("r-out").innerHTML="";
  $("k-done").textContent=cs.status==="done"?"진행 중으로 되돌리기":"사건 완료 처리";
 }
 function renderOut(){
@@ -713,6 +747,82 @@ function showView(){
  window.scrollTo(0,0);
 }
 window.addEventListener("hashchange",showView);
+
+/* ---------- 고객 문서 만들기 ----------
+   tools/docgen.py 의 request 와 같은 방식으로 틀 docx 의 {{빈칸}}을 채운다.
+   채운 칸의 노란 표시와 맨 위 "발송 전 이 줄 삭제" 안내 줄을 지우고, 못 채운 빈칸은 노란색 그대로 두고 알린다.
+   틀과 회사 정보는 웹 주소로 열었을 때만 읽을 수 있다(파일로 열면 브라우저가 막음). */
+var GEN={id:null,files:null};
+var WDAY={ko:"월화수목금토일",zh:"一二三四五六日"};
+function outDoc(id){var r=null;((T&&T.outputs&&T.outputs.documents)||[]).forEach(function(d){if(d.id===id)r=d});return r}
+function Lg(v,lang){return v&&typeof v==="object"?(v[lang]||v.ko||v.zh||""):(v==null?"":v)}
+function pdate(iso){var a=String(iso).split("-");return new Date(+a[0],+a[1]-1,+a[2])}
+function fdate(iso,lang){var d=pdate(iso),w=(d.getDay()+6)%7;return lang==="ko"?d.getFullYear()+". "+(d.getMonth()+1)+". "+d.getDate()+".("+WDAY.ko[w]+")":d.getFullYear()+"年"+(d.getMonth()+1)+"月"+d.getDate()+"日(星期"+WDAY.zh[w]+")"}
+function fdue(iso,lang){var d=pdate(iso);return lang==="ko"?(d.getMonth()+1)+"월 "+d.getDate()+"일":(d.getMonth()+1)+"月"+d.getDate()+"日"}
+function xt(v){return String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,'</w:t><w:br/><w:t xml:space="preserve">')}
+function fillXml(x,vals){
+ return x.replace(/<w:r[ >](?:(?!<\/w:r>)[\s\S])*<\/w:r>/g,function(run){
+  (run.match(/\{\{\w+\}\}/g)||[]).forEach(function(t){var k=t.slice(2,-2);if(vals[k]!=null&&vals[k]!=="")run=run.split(t).join(xt(vals[k]))});
+  if(run.indexOf("{{")<0)run=run.replace(/<w:highlight[^>]*\/>/g,"");
+  return run;
+ });
+}
+function dropTag(x,needle,tag){
+ var i=x.indexOf(needle);if(i<0)return x;
+ var st=Math.max(x.lastIndexOf("<w:"+tag+">",i),x.lastIndexOf("<w:"+tag+" ",i)), en=x.indexOf("</w:"+tag+">",i)+tag.length+5;
+ return x.slice(0,st)+x.slice(en);
+}
+function buildXml(kind,x,cs,firm,lang,date){
+ var sfx=lang==="ko"?"ko":"cn", v={client_name_cn:cs.client_cn,receiver_tel:firm.tel,receiver_email:firm.email};
+ v["date_"+sfx]=fdate(date,lang);v["attorney_"+sfx]=Lg(firm.attorney,lang);v["receiver_"+sfx]=Lg(firm.receiver,lang);
+ if(cs.reply_by)v["reply_due_"+sfx]=fdue(cs.reply_by,lang);
+ ["발송 전 이 줄 삭제","发送前删除本行"].some(function(n){if(x.indexOf(n)>=0){x=dropTag(x,n,"p");return true}});
+ if(kind==="request"){
+  var alt=Lg({ko:cs.alt_ko,zh:cs.alt_zh},lang);
+  if(alt)v.investor_option_2=alt;
+  else{
+   x=x.replace(/<w:r[ >](?:(?!<\/w:r>)[\s\S])*?\{\{investor_option_2\}\}(?:(?!<\/w:r>)[\s\S])*?<\/w:r>/g,"");
+   x=x.replace("　□ </w:t>","</w:t>");
+  }
+ }
+ x=fillXml(x,v);
+ var left=[],seen={};(x.replace(/<[^>]+>/g,"").match(/\{\{\w+\}\}/g)||[]).forEach(function(t){if(!seen[t]){seen[t]=1;left.push(t.slice(2,-2))}});
+ return {xml:x,left:left.sort()};
+}
+function loadScript(src){return new Promise(function(res,rej){if(window.JSZip)return res();var el=document.createElement("script");el.src=src;el.onload=res;el.onerror=function(){rej(Error(src+" 를 읽지 못했습니다."))};document.head.appendChild(el)})}
+function getBin(u){return fetch(u,{cache:"no-cache"}).then(function(r){if(!r.ok)throw Error(u+" ("+r.status+")");return r.arrayBuffer()})}
+function safeName(n){return String(n).replace(/[\\/:*?"<>|]/g,"_")}
+function makeDocs(od,cs){
+ if(!/^https?:$/.test(location.protocol))return Promise.reject(Error("문서 만들기는 웹 주소(GitHub Pages)로 열었을 때만 됩니다. 파일로 열면 브라우저가 틀 파일을 읽지 못하게 막습니다."));
+ var date=today(), langs=["zh","ko"];
+ return Promise.all([loadScript("lib/jszip.min.js"),getJSON("tools/firm_profile.json")]).then(function(r){
+  var firm=r[1];
+  return Promise.all(langs.map(function(lang){
+   return getBin(od.templates[lang]).then(function(buf){return JSZip.loadAsync(buf)}).then(function(z){
+    return z.file("word/document.xml").async("string").then(function(x){
+     var b=buildXml(od.id,x,cs,firm,lang,date);
+     z.file("word/document.xml",b.xml,{createFolders:false});
+     return z.generateAsync({type:"blob",compression:"DEFLATE",mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}).then(function(blob){
+      var name=od.names[lang].replace("{short}",cs.client_short||cs.client_cn||cs.name||"").replace("{ymd}",date.replace(/-/g,""));
+      return {lang:lang,blob:blob,name:safeName(name),left:b.left};
+     });
+    });
+   });
+  }));
+ });
+}
+function saveBlob(f){var u=URL.createObjectURL(f.blob),a=document.createElement("a");a.href=u;a.download=f.name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove()},5000)}
+function renderGen(cs,od){
+ var fs=GEN.files||[], canShare=false;
+ try{canShare=!!(navigator.canShare&&navigator.canShare({files:fs.map(function(f){return new File([f.blob],f.name,{type:f.blob.type})})}))}catch(e){}
+ var left=[];fs.forEach(function(f){f.left.forEach(function(k){if(left.indexOf(k)<0)left.push(k)})});
+ var done=(cs.steps||{})[od.step];
+ $("r-out").innerHTML='<div class="files">'+fs.map(function(f,i){return '<div class="row"><button class="act ghost" type="button" data-dl="'+i+'" style="margin:0">⬇ '+(f.lang==="zh"?"중문":"국문")+' 내려받기</button><span class="small">'+esc(f.name)+'</span></div>'}).join("")
+  +(canShare?'<button class="act" type="button" data-share="1">📤 메일·위챗 등으로 보내기</button>':'<p class="hint">이 기기에서는 바로 보내기가 안 됩니다. 내려받은 파일을 메일에 첨부해 주세요.</p>')
+  +(left.length?'<p class="warn">채우지 못한 빈칸(문서에 노란색으로 남음): '+esc(left.join(", "))+'</p>':'<p class="note">빈칸을 모두 채웠습니다. 보내기 전에 한 번 열어 확인해 주세요.</p>')
+  +'<p class="hint">만든 파일은 드라이브 사건 폴더의 01_자료요청·회신에 넣어 두세요.</p>'
+  +'<button class="act ghost" type="button" data-step="'+esc(od.step)+'" data-case="'+esc(cs.id)+'">'+(done?'✓ 보냄으로 표시됨 ('+esc(done)+')':'고객에게 보냈으면 눌러 주세요 ('+esc(od.step)+' 완료)')+'</button></div>';
+}
 
 /* ---------- GitHub 동기화 ----------
    리걸트랙과 같은 방식: 비공개 저장소의 파일 하나를 GitHub API로 읽고 쓴다.
@@ -845,6 +955,7 @@ document.addEventListener("click",function(e){
   k.steps=k.steps||{};
   if(k.steps[b.dataset.step])delete k.steps[b.dataset.step];else k.steps[b.dataset.step]=today();
   touch(k);safe(render);
+  var od2=outDoc("request");if(GEN.files&&GEN.id===k.id&&od2)renderGen(k,od2);
  }
  else if(b.dataset.docst&&cs){
   cs.docs=cs.docs||{};
@@ -852,15 +963,29 @@ document.addEventListener("click",function(e){
   touch(cs);safe(render);
  }
  else if(b.dataset.cfilter){CF=b.dataset.cfilter;renderCases()}
- else if(b.dataset.ntrack){NEWTRACK=b.dataset.ntrack;renderNew()}
+ else if(b.dataset.ndir){NEW.dir=b.dataset.ndir;NEW.track=null;NEW.sh=null;var tt=tracksAt((dirs().filter(function(x){return x.id===NEW.dir})[0]||{}).where).filter(function(t){return t.ready&&D.data[t.id]});if(tt.length===1)NEW.track=tt[0].id;renderNew()}
+ else if(b.dataset.ntrack){NEW.track=b.dataset.ntrack;NEW.sh=null;renderNew()}
+ else if(b.dataset.nsh){NEW.sh=b.dataset.nsh;renderNew();$("n-name").focus()}
  else if(b.id==="n-go"){
   var name=$("n-name").value.trim();
   if(!name){$("n-msg").innerHTML='<p class="warn">사건명을 넣어 주세요.</p>';return}
   var id="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-  var nc={id:id,name:name,client:$("n-client").value.trim(),drive:$("n-drive").value.trim(),track:NEWTRACK,status:"active",inputs:null,steps:{},docs:{},fees:{},memo:"",created:nowISO(),updated:nowISO()};
+  var nc={id:id,name:name,client:$("n-client").value.trim(),client_cn:$("n-client-cn").value.trim(),drive:$("n-drive").value.trim(),
+   track:NEW.track,status:"active",inputs:NEW.sh?{shareholder_type:NEW.sh}:null,steps:{},docs:{},fees:{},memo:"",reply_by:addDays(14),created:nowISO(),updated:nowISO()};
+  nc.client_short=nc.client||"";
   STORE.cases.unshift(nc);enterCase(nc,true);touch(nc);
-  $("n-name").value="";$("n-client").value="";$("n-drive").value="";$("n-msg").innerHTML="";
-  location.hash="#input";
+  ["n-name","n-client","n-client-cn","n-drive"].forEach(function(k){$(k).value=""});$("n-msg").innerHTML="";NEW={dir:null,track:null,sh:null};
+  $("r-box").open=true;location.hash="#case-"+id;
+ }
+ else if(b.id==="r-make"&&cs){
+  var od=outDoc("request");if(!od)return;
+  $("r-out").innerHTML='<p class="note">만드는 중입니다…</p>';b.disabled=true;
+  makeDocs(od,cs).then(function(fs){GEN={id:cs.id,files:fs};renderGen(cs,od)},function(err){$("r-out").innerHTML='<p class="warn">'+esc(err.message||err)+'</p>'}).then(function(){b.disabled=false});
+ }
+ else if(b.dataset.dl&&GEN.files){saveBlob(GEN.files[+b.dataset.dl])}
+ else if(b.dataset.share&&GEN.files){
+  var fl=GEN.files.map(function(f){return new File([f.blob],f.name,{type:f.blob.type})});
+  navigator.share({files:fl}).catch(function(){});
  }
  else if(b.id==="k-done"&&cs){cs.status=cs.status==="done"?"active":"done";touch(cs);safe(render)}
  else if(b.id==="k-del"&&cs){

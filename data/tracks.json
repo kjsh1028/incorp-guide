@@ -1,7 +1,11 @@
 {
   "version": "0.1",
   "updated": "2026-10-05",
-  "note": "첫 화면의 '어디에 + 무엇을' 선택지. ready가 true인 트랙만 data/tracks/<id>/ 의 규칙 데이터를 읽는다.",
+  "note": "새 사건과 가이드의 선택지. directions(큰 방향)를 먼저 고르고, 그 where 의 트랙 중에서 고른다. ready가 true인 트랙만 data/tracks/<id>/ 의 규칙 데이터를 읽는다.",
+  "directions": [
+    {"id": "to-kr", "where": "KR", "label": "외국 → 한국", "desc": "외국 회사나 개인이 한국에 법인·지점을 세웁니다"},
+    {"id": "to-cn", "where": "CN", "label": "한국 → 중국", "desc": "한국 회사가 중국에 법인·대표처를 세웁니다"}
+  ],
   "where": [
     {"id": "KR", "label": "한국"},
     {"id": "CN", "label": "중국"}

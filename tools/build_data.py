@@ -12,7 +12,7 @@ import json, os, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 OUT = os.path.join(DATA, "bundle.js")
-FILES = ["inputs", "rules", "process", "documents", "agencies", "costs"]
+FILES = ["inputs", "rules", "process", "documents", "agencies", "costs", "outputs"]
 
 
 def load(path):
