@@ -1,0 +1,34 @@
+# data/ 의 JSON이 바뀌면 data/bundle.js 를 다시 만들어 같은 브랜치에 올린다.
+# GitHub 웹에서 JSON을 직접 고쳐도 화면(파일로 열 때)이 최신 데이터를 쓰게 하기 위함.
+name: 규칙 데이터 묶음 갱신
+
+on:
+  push:
+    paths:
+      - "data/**.json"
+      - "tools/build_data.py"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 묶음 파일 만들기
+        run: python tools/build_data.py
+      - name: 바뀌었으면 올리기
+        run: |
+          if git diff --quiet -- data/bundle.js; then
+            echo "data/bundle.js 변경 없음"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/bundle.js
+          git commit -m "data/bundle.js 자동 갱신"
+          git push

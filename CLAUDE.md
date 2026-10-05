@@ -16,7 +16,7 @@
 - 트랙 ID: KR-JSC(외국 투자자의 한국 주식회사, 현재 유일하게 작동), KR-LLC, KR-BR, KR-LO, CN-WFOE, CN-RO, CN-JV, CN-BRANCH.
 - 트랙별 데이터: `data/tracks/<ID>/inputs.json, rules.json, process.json, documents.json, agencies.json, costs.json`
 - 트랙 목록은 `data/tracks.json`. `index.html` 에는 규칙 내용이 없고 JSON의 조건식(when, applies, expr, formula)을 계산해 화면을 그린다.
-- `index.html` 은 웹 주소로 열면 JSON을 직접 읽고, 파일로 열면(file://) `data/bundle.js` 를 읽는다. JSON을 고친 뒤에는 `python tools/build_data.py` 를 실행해 묶음 파일을 다시 만들고 함께 커밋한다(`--check` 로 확인).
+- `index.html` 은 웹 주소로 열면 JSON을 직접 읽고, 파일로 열면(file://) `data/bundle.js` 를 읽는다. JSON을 고친 뒤에는 `python tools/build_data.py` 를 실행해 묶음 파일을 다시 만들고 함께 커밋한다(`--check` 로 확인). GitHub에 JSON만 올라와도 `.github/workflows/build-data.yml` 이 묶음 파일을 자동으로 다시 만들어 올린다.
 
 ## 현재 상태 (v0.3, 2026-10-05)
 - 됨: KR-JSC 가이드 화면(절차·서류·기관·비용·확인필요), 회신 값 붙여넣기.
@@ -34,6 +34,8 @@
 
 ## 결정된 사항
 - 사용자는 1명. 로그인·권한 기능 없음.
+- 규칙 데이터의 원본은 GitHub 저장소. 드라이브 `법인 설립 프로그램 > 01_규칙데이터` 는 사본이며, 바꾼 이전 파일은 `이전본_날짜` 폴더로 옮겨 둔다(2026-10-05).
+- 저장소는 당분간 공개로 둔다(2026-10-05 사용자 결정). 그래서 고객 정보는 더욱 올리지 않는다.
 - 사건 데이터는 사용자의 드라이브(고객 사건 폴더)에 파일로 둔다. 서버 저장 없음.
 - 율촌 보수는 사건마다 직접 입력. 세금·공과금만 자동 계산.
 - 공증·아포스티유 기간(7~14일)과 중문 참고번역(율촌 제공)은 표준키트 기준을 따른다.
