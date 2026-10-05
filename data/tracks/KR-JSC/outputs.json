@@ -17,8 +17,9 @@
         "zh": "韩国子公司设立所需信息及文件清单_{short}_CN_{ymd}.docx"
       },
       "fits": "shareholder_type == 'cn_company_direct'",
-      "fits_note": "이 자료요청서 틀은 중국 법인 직접 출자용입니다. 다른 주주 유형용 틀은 아직 없습니다.",
-      "status": "pilot"
+      "fits_note": "이 자료요청서 틀은 중국 법인 직접 출자용입니다(법무지원팀 확인). 다른 주주 유형용 틀은 아직 없습니다.",
+      "status": "confirmed",
+      "basis": "법무지원팀 확인본(2026-09-28, 선례 확정본 국문 v8·중문 v7)과 대조: 같은 값으로 만들면 내용·서식이 같음(2026-10-05)"
     },
     {
       "id": "signing",

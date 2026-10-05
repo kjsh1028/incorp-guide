@@ -18,9 +18,10 @@ let bad=0; const ok=(name,c)=>{console.log((c?'같음  ':'다름! ')+name); if(!
   const c1=JSON.parse(fs.readFileSync(R+'tools/sample_case.json','utf8'));
   const c2=JSON.parse(JSON.stringify(c1)); c2.officers={other_directors:1,auditor:true}; c2.investor_options=[];
   c2.report={no:3,done:[],requests:[],next_plan:{ko:'시험',zh:'测试'},schedule:[{when:{ko:'완료',zh:'已完成'},status:'done'},{when:{ko:'해당 없음',zh:'不适用'}}]};
-  for (const [tag,c] of [['샘플',c1],['변형',c2]]) {
+  const c3=JSON.parse(JSON.stringify(c1)); c3.investor_options=[{label:{ko:'홍콩 법인',zh:'香港公司'},type:'hold'},{label:{ko:'싱가포르 법인',zh:'新加坡公司'},type:'hold'}];
+  for (const [tag,c] of [['샘플',c1],['변형',c2],['후보둘',c3]]) {
     const cf=W+'/'+tag+'.json', out=W+'/out_'+tag; fs.writeFileSync(cf,JSON.stringify(c));
-    const d={client_cn:c.client_name_cn,date:c.date,reply_by:c.reply_by,alt:(c.investor_options[0]||{}).label||{},officers:c.officers,report:c.report};
+    const d={client_cn:c.client_name_cn,date:c.date,reply_by:c.reply_by,alts:c.investor_options.map(o=>o.label),officers:c.officers,report:c.report};
     for (const kind of ['request','signing','progress']) {
       const made=py('tools/docgen.py',kind,cf,out).trim().split('\n').map(l=>l.split(' ')[0]);
       for (const f of made) {

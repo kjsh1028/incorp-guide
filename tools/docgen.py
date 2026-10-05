@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """고객 문서 생성기 v0.3 — 표준 템플릿({{빈칸}})에 사건 값을 채운다. 서식은 템플릿 그대로.
   python tools/docgen.py request  case.json outdir   자료요청서(필요 정보 및 서류 안내)
+  python tools/docgen.py request_cnwfoe case.json outdir   한국 법인의 중국 독자법인 설립 자료요청서(초안 틀, 국문만)
   python tools/docgen.py signing  case.json outdir   서명 및 공증 서류 안내
   python tools/docgen.py progress case.json outdir   진행 보고
   python tools/docgen.py read     case.json 회신본.docx   자료요청서 회신 판독 -> JSON 출력
@@ -13,6 +14,7 @@ WD = {"ko": "월화수목금토일", "zh": "一二三四五六日"}
 NAMES = {
  ("request", "ko"): "한국자회사설립_필요정보및서류안내_{short}_KR_{ymd}.docx",
  ("request", "zh"): "韩国子公司设立所需信息及文件清单_{short}_CN_{ymd}.docx",
+ ("request_cnwfoe", "ko"): "중국자회사설립_필요정보및서류안내_{short}_KR_{ymd}.docx",
  ("signing", "ko"): "서명및공증서류안내_{short}_KR_{ymd}.docx",
  ("signing", "zh"): "待签署及公证文件清单_{short}_CN_{ymd}.docx",
  ("progress", "ko"): "진행보고_{short}한국자회사설립_제{no}기_KR_{ymd}.docx",
@@ -71,8 +73,8 @@ def build(kind, case, lang):
     src = zipfile.ZipFile(os.path.join(HERE, "templates", "%s_%s.docx" % (kind, lang)))
     x = src.read("word/document.xml").decode("utf-8")
     v = common(case, lang); x = drop_note(x)
-    if kind == "request":
-        opts = [L(o["label"], lang) for o in case.get("investor_options", [])]
+    if kind.split("_")[0] == "request":
+        opts = [t for t in (L(o["label"], lang) for o in case.get("investor_options", [])) if t]
         v["investor_option_2"] = "　□ ".join(opts) if opts else None
         if not opts:  # 다른 출자 후보가 없으면 그 선택지 자체를 뺀다
             x = re.sub(r"<w:r[ >](?:(?!</w:r>).)*?\{\{investor_option_2\}\}(?:(?!</w:r>).)*?</w:r>", "", x, flags=re.S)
@@ -110,6 +112,8 @@ def build(kind, case, lang):
 def make(kind, case, outdir):
     os.makedirs(outdir, exist_ok=True); res = []
     for lang in case.get("languages", ["zh", "ko"]):
+        if not os.path.exists(os.path.join(HERE, "templates", "%s_%s.docx" % (kind, lang))):
+            print("틀 없음, 건너뜀:", kind, lang, file=sys.stderr); continue
         data, left = build(kind, case, lang)
         name = NAMES[(kind, lang)].format(short=case["client_short"], ymd=case["date"].replace("-", ""), no=case.get("report", {}).get("no", ""))
         p = os.path.join(outdir, name); open(p, "wb").write(data); res.append((p, left))

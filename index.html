@@ -188,8 +188,8 @@ tfoot td{font-weight:700;border-bottom:0}
         <div class="q"><label for="r-short">약칭 (파일 이름에 씁니다)</label><input id="r-short" data-cf="client_short" type="text"></div>
         <div class="q"><label for="r-due">회신 기한</label><input id="r-due" data-cf="reply_by" type="date"></div>
         <div class="q"><span class="lab">다른 출자 후보 (있을 때만)</span>
-          <div class="row"><input id="r-alt-ko" data-cf="alt_ko" type="text" placeholder="국문 예: 홍콩 법인"><input id="r-alt-zh" data-cf="alt_zh" type="text" placeholder="중문 예: 香港公司"></div>
-          <p class="hint">고객이 출자 주체를 고를 수 있게 요청서에 선택지로 넣습니다.</p></div>
+          <div class="row"><textarea id="r-alt-ko" data-cf="alt_ko" rows="2" class="ta" placeholder="국문, 한 줄에 하나&#10;예: 横琴 법인&#10;싱가포르 법인"></textarea><textarea id="r-alt-zh" data-cf="alt_zh" rows="2" class="ta" placeholder="중문, 같은 순서로&#10;例：横琴公司&#10;新加坡公司"></textarea></div>
+          <p class="hint">고객이 출자 주체를 고를 수 있게 요청서에 선택지로 넣습니다. 여러 개면 한 줄에 하나씩 적어 주세요.</p></div>
         <button class="act" id="r-make" type="button">중문·국문 자료요청서 만들기</button>
         <div id="r-out"></div>
       </section>
@@ -805,15 +805,15 @@ function repeatTag(x,key,tag,slots,items,render){
  i=x.indexOf("{{"+key+"_1}}");b=boundsOf(x,i,tag);
  return x.slice(0,b[0])+items.map(function(it,n){return render(proto,n+1,it)}).join("")+x.slice(b[1]);
 }
-/* d: docgen.py 의 case 와 같은 뜻 {client_cn, date, reply_by, alt:{ko,zh}, officers:{other_directors, auditor}, report} */
+/* d: docgen.py 의 case 와 같은 뜻 {client_cn, date, reply_by, alts:[{ko,zh}...](= investor_options 의 label), officers:{other_directors, auditor}, report} */
 function buildXml(kind,x,d,firm,lang){
  var sfx=lang==="ko"?"ko":"cn", v={client_name_cn:d.client_cn,receiver_tel:firm.tel,receiver_email:firm.email};
  v["date_"+sfx]=fdate(d.date,lang);v["attorney_"+sfx]=Lg(firm.attorney,lang);v["receiver_"+sfx]=Lg(firm.receiver,lang);
  if(d.reply_by)v["reply_due_"+sfx]=fdue(d.reply_by,lang);
  ["발송 전 이 줄 삭제","发送前删除本行"].some(function(n){if(x.indexOf(n)>=0){x=dropTag(x,n,"p");return true}});
  if(kind==="request"){
-  var alt=Lg(d.alt||{},lang);
-  if(alt)v.investor_option_2=alt;
+  var opts=(d.alts||[]).map(function(o){return Lg(o,lang)}).filter(Boolean);
+  if(opts.length)v.investor_option_2=opts.join("　□ ");
   else{
    x=x.replace(/<w:r[ >](?:(?!<\/w:r>)[\s\S])*?\{\{investor_option_2\}\}(?:(?!<\/w:r>)[\s\S])*?<\/w:r>/g,"");
    x=x.replace("　□ </w:t>","</w:t>");
@@ -875,7 +875,7 @@ function saveBlob(f){var u=URL.createObjectURL(f.blob),a=document.createElement(
 /* 사건 기록 → 문서 값 */
 function shortOf(cs){return cs.client_short||cs.client_cn||cs.name||""}
 function docData(cs,od,c){
- var d={client_cn:cs.client_cn,date:today(),reply_by:cs.reply_by,alt:{ko:cs.alt_ko,zh:cs.alt_zh}};
+ var d={client_cn:cs.client_cn,date:today(),reply_by:cs.reply_by,alts:pairLines(cs.alt_ko,cs.alt_zh)};
  if(od.officers)d.officers={other_directors:when(od.officers.other_directors,c)?1:0,auditor:when(od.officers.auditor,c)};
  if(od.id==="progress"){var pd=pDraft(cs,c,plan(c),od);d.reply_by=pd.reply_by;d.report=reportOf(pd)}
  return d;
@@ -1101,7 +1101,7 @@ function readReplyFile(file,cs){
  }).then(function(xml){
   var si=shInput(T), first=si?(si.options.filter(function(o){return o.value===V.shareholder_type})[0]||{}):{};
   var so=[{label:cs.client_cn||"",type:(first.alias&&first.alias[0])||first.value||"cn"}];
-  if(cs.alt_ko||cs.alt_zh)so.push({label:{ko:cs.alt_ko,zh:cs.alt_zh},type:null});
+  pairLines(cs.alt_ko,cs.alt_zh).forEach(function(a){so.push({label:a,type:null})});
   var r=readReply(readTables(xml),so);
   if(r.answers.shareholder_type===null){delete r.answers.shareholder_type;r.review.unshift("1 출자주체: 다른 출자 후보를 골랐습니다. 주주 유형을 직접 고르세요")}
   return r;
