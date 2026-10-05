@@ -1,14 +1,17 @@
 {
   "track": "KR-JSC",
-  "version": "0.1",
+  "version": "0.2",
   "updated": "2026-10-05",
-  "note": "화면에서 만드는 고객 문서. 틀은 tools/templates 의 docx({{빈칸}})이고 tools/docgen.py 와 같은 틀을 쓴다. fits 가 거짓이면 화면에 '이 틀은 맞지 않을 수 있음'을 확인필요로 표시한다.",
+  "note": "화면에서 만드는 고객 문서. 틀은 tools/templates 의 docx({{빈칸}})이고 tools/docgen.py 와 같은 틀을 쓴다. fits 가 거짓이면 화면에 '이 틀은 맞지 않을 수 있음'을 확인필요로 표시한다. progress 의 milestones 는 진행 보고 일정 표 7행과 같은 순서이며, 각 행의 상태는 연결된 단계로 정한다: 해당 단계가 모두 끝났으면 완료, 하나라도 끝났거나 바로 할 차례면 진행, 아니면 예정. 이 사건에 해당하는 단계가 없으면 '해당 없음'으로 적고 표시하지 않는다.",
   "documents": [
     {
       "id": "request",
       "label": "자료요청서 (필요 정보 및 서류 안내)",
       "step": "P2-1",
-      "templates": {"zh": "tools/templates/request_zh.docx", "ko": "tools/templates/request_ko.docx"},
+      "templates": {
+        "zh": "tools/templates/request_zh.docx",
+        "ko": "tools/templates/request_ko.docx"
+      },
       "names": {
         "ko": "한국자회사설립_필요정보및서류안내_{short}_KR_{ymd}.docx",
         "zh": "韩国子公司设立所需信息及文件清单_{short}_CN_{ymd}.docx"
@@ -16,6 +19,110 @@
       "fits": "shareholder_type == 'cn_company_direct'",
       "fits_note": "이 자료요청서 틀은 중국 법인 직접 출자용입니다. 다른 주주 유형용 틀은 아직 없습니다.",
       "status": "pilot"
+    },
+    {
+      "id": "signing",
+      "label": "서명 및 공증 서류 안내",
+      "step": "P3-4",
+      "templates": {
+        "zh": "tools/templates/signing_zh.docx",
+        "ko": "tools/templates/signing_ko.docx"
+      },
+      "names": {
+        "ko": "서명및공증서류안내_{short}_KR_{ymd}.docx",
+        "zh": "待签署及公证文件清单_{short}_CN_{ymd}.docx"
+      },
+      "fits": "shareholder_type == 'cn_company_direct'",
+      "fits_note": "이 서명 안내서 틀은 중국 법인 직접 출자용입니다. 다른 주주 유형용 틀은 아직 없습니다.",
+      "status": "pilot",
+      "officers": {
+        "other_directors": "director_count != '1'",
+        "auditor": "has_auditor == true"
+      }
+    },
+    {
+      "id": "progress",
+      "label": "진행 보고",
+      "every_days": 7,
+      "templates": {
+        "zh": "tools/templates/progress_zh.docx",
+        "ko": "tools/templates/progress_ko.docx"
+      },
+      "names": {
+        "ko": "진행보고_{short}한국자회사설립_제{no}기_KR_{ymd}.docx",
+        "zh": "进度报告_{short}韩国子公司设立_第{no}期_CN_{ymd}.docx"
+      },
+      "fits": "shareholder_type == 'cn_company_direct'",
+      "fits_note": "이 진행 보고 틀은 중국 법인 직접 출자용입니다(ODI 행 포함). 다른 주주 유형용 틀은 아직 없습니다.",
+      "status": "pilot",
+      "milestones": [
+        {
+          "label": "회사 기본정보 확정",
+          "steps": [
+            "P1-5",
+            "P2-3"
+          ]
+        },
+        {
+          "label": "정관 및 서명 서류",
+          "steps": [
+            "P3-1",
+            "P3-2",
+            "P3-4"
+          ]
+        },
+        {
+          "label": "서명·공증·아포스티유 (귀사)",
+          "steps": [
+            "P4-1",
+            "P4-2",
+            "P4-3"
+          ]
+        },
+        {
+          "label": "ODI (귀사)",
+          "steps": [
+            "P6-1",
+            "P6-2",
+            "P6-3"
+          ]
+        },
+        {
+          "label": "외국인투자신고 및 자본금 송금",
+          "steps": [
+            "P8-1",
+            "P9-1",
+            "P9-2",
+            "P9-3"
+          ]
+        },
+        {
+          "label": "설립등기",
+          "steps": [
+            "P10-1",
+            "P10-2",
+            "P10-3",
+            "P10-4",
+            "P10-5"
+          ]
+        },
+        {
+          "label": "세무등기·계좌 개설·외국인투자기업 등록",
+          "steps": [
+            "P11-1",
+            "P12-1",
+            "P12-2"
+          ]
+        }
+      ],
+      "none": {
+        "ko": "(없음)",
+        "zh": "（无）"
+      },
+      "not_applicable": {
+        "ko": "해당 없음",
+        "zh": "不适用"
+      }
     }
   ]
 }
