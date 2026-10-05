@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>법인 설립 가이드 생성기</title>
+<!-- 글꼴: 리걸트랙과 같은 Noto Sans KR. 화면을 막지 않게 늦게 불러오고, 못 불러오면(중국 등) 기기 기본 글꼴로 보인다. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" media="print" onload="this.media='all'">
 <style>
 :root{
   box-sizing:border-box;
@@ -12,55 +16,77 @@
   --paper:#F5F7FA; --sheet:#FFFFFF; --ink:#14213D; --ink2:#4A5670; --line:#D3D9E2;
   --seal:#B3261E; --seal-bg:#FBEAE8; --ok:#1F6F5C; --ok-bg:#E3F1ED;
   --kr:#2C4A8A; --cn:#9A6B1F; --focus:#2C4A8A; --mute-bg:#EBEEF3;
+  --bar:#1F3A68; --bar-ink:#FFFFFF;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --paper:#10141C; --sheet:#181E29; --ink:#E6EAF2; --ink2:#A3ADC0; --line:#2C3545;
     --seal:#F0857D; --seal-bg:#3A1C1A; --ok:#6FC7B0; --ok-bg:#16302A;
     --kr:#8FAEEB; --cn:#E0B160; --focus:#8FAEEB; --mute-bg:#222A38;
+    --bar:#1B2740; --bar-ink:#E6EAF2;
   }
 }
 :root[data-theme="dark"]{
   --paper:#10141C; --sheet:#181E29; --ink:#E6EAF2; --ink2:#A3ADC0; --line:#2C3545;
   --seal:#F0857D; --seal-bg:#3A1C1A; --ok:#6FC7B0; --ok-bg:#16302A;
   --kr:#8FAEEB; --cn:#E0B160; --focus:#8FAEEB; --mute-bg:#222A38;
+  --bar:#1B2740; --bar-ink:#E6EAF2;
 }
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--paper);color:var(--ink);
-  font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;
+  font-family:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR",sans-serif;
   font-size:16px;line-height:1.6;-webkit-text-size-adjust:100%}
-.wrap{max-width:760px;margin:0 auto;padding:20px 16px 64px}
-h1,h2,h3{font-family:"AppleMyungjo","Nanum Myeongjo","Noto Serif KR","Batang",serif;line-height:1.3;margin:0}
+.wrap{max-width:760px;margin:0 auto;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 96px)}
+h1,h2,h3{line-height:1.3;margin:0;letter-spacing:-.01em}
 h1{font-size:1.6rem;font-weight:700}
-h2{font-size:1.2rem;font-weight:700;margin-bottom:12px}
-h3{font-size:1rem;font-weight:600}
+h2{font-size:1.15rem;font-weight:800;margin-bottom:12px}
+h3{font-size:1rem;font-weight:700}
 p{margin:0}
 .lede{color:var(--ink2);margin-top:6px;font-size:.95rem}
-section{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;margin-top:16px}
+section{background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:18px 16px;margin-top:16px}
 .q{margin-top:16px}
 .q:first-of-type{margin-top:0}
 .q > label,.q > .lab{display:block;font-weight:600;margin-bottom:6px}
 .hint{color:var(--ink2);font-size:.85rem;margin-top:4px}
 .opts{display:flex;flex-wrap:wrap;gap:8px}
 .opts button{font:inherit;color:var(--ink);background:var(--sheet);border:1px solid var(--line);
-  border-radius:3px;padding:9px 12px;min-height:44px;cursor:pointer;text-align:left}
+  border-radius:10px;padding:9px 14px;min-height:44px;cursor:pointer;text-align:left}
 .opts button[aria-pressed="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
 .opts button:disabled{color:var(--ink2);background:var(--mute-bg);cursor:not-allowed}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 input[type=number],input[type=text]{font:inherit;color:var(--ink);background:var(--sheet);border:1px solid var(--line);
-  border-radius:3px;padding:9px 10px;min-height:44px;width:100%;max-width:280px}
+  border-radius:10px;padding:9px 12px;min-height:44px;width:100%;max-width:280px}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .echo{color:var(--ink2);font-size:.9rem}
-.warn{background:var(--seal-bg);border-left:4px solid var(--seal);padding:10px 12px;margin-top:10px;font-size:.92rem;border-radius:2px}
-.note{background:var(--mute-bg);padding:10px 12px;margin-top:10px;font-size:.92rem;border-radius:2px}
-.tabs{display:flex;gap:4px;overflow-x:auto;margin:20px 0 0;padding-bottom:2px}
-.tabs button{font:inherit;font-weight:600;color:var(--ink2);background:transparent;border:0;border-bottom:3px solid transparent;
-  padding:10px 12px;min-height:44px;white-space:nowrap;cursor:pointer}
-.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
-.panel{display:none}.panel.on{display:block}
+.warn{background:var(--seal-bg);border-left:4px solid var(--seal);padding:10px 12px;margin-top:10px;font-size:.92rem;border-radius:8px}
+.note{background:var(--mute-bg);padding:10px 12px;margin-top:10px;font-size:.92rem;border-radius:8px}
+/* 화면 틀: 위 머리줄, 아래 메뉴, 화면 전환 */
+.bar{background:var(--bar);color:var(--bar-ink);padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 14px}
+.bar-in{max-width:760px;margin:0 auto;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.bar b{font-size:1.15rem}.bar span{font-size:.85rem;opacity:.85}
+.view{display:none}.view.on{display:block}
+.sub{display:flex;align-items:center;gap:10px;margin:4px 0 4px}
+.sub h2{margin:0}
+.back{font:inherit;font-weight:600;color:var(--kr);background:var(--mute-bg);border-radius:999px;padding:8px 14px;min-height:40px;display:inline-flex;align-items:center;text-decoration:none;white-space:nowrap}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.card{display:flex;flex-direction:column;justify-content:space-between;min-height:120px;background:var(--sheet);border:1px solid var(--line);border-top:4px solid var(--c,var(--ink2));
+  border-radius:12px;padding:14px;color:var(--ink);text-decoration:none;font:inherit;text-align:left;cursor:pointer}
+.card .k{font-weight:700;color:var(--c,var(--ink2));font-size:.95rem}
+.card b{font-size:1.6rem;font-weight:800;line-height:1.2;margin-top:10px;color:var(--c,var(--ink));word-break:keep-all}
+.card .s{color:var(--ink2);font-size:.82rem;margin-top:4px}
+.case{display:block;background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:16px;color:var(--ink);text-decoration:none}
+.case .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.case .top b{font-size:1.05rem}.case .top span{color:var(--kr);font-weight:600;font-size:.9rem;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chips span{font-size:.8rem;background:var(--mute-bg);color:var(--ink2);border-radius:999px;padding:3px 10px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;background:var(--sheet);border-top:1px solid var(--line);display:flex;justify-content:space-around;
+  padding:4px 4px calc(env(safe-area-inset-bottom,0px) + 4px);z-index:10}
+.tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;min-height:48px;justify-content:center;color:var(--ink2);text-decoration:none;font-size:.72rem;font-weight:600}
+.tabbar a i{font-style:normal;font-size:1.25rem;line-height:1.2}
+.tabbar a[aria-current="page"]{color:var(--ink)}
 .sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
-.sum div{border:1px solid var(--line);border-radius:3px;padding:10px 12px}
+.sum div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .sum b{display:block;font-size:1.15rem}
 .sum span{color:var(--ink2);font-size:.85rem}
 .phase{margin-top:22px}
@@ -69,7 +95,7 @@ input[type=number],input[type=text]{font:inherit;color:var(--ink);background:var
 .step.cn{border-left-color:var(--cn)}
 .step .t{font-weight:600}
 .meta{color:var(--ink2);font-size:.86rem;margin-top:2px}
-.tag{display:inline-block;font-size:.76rem;font-weight:600;padding:1px 7px;border-radius:2px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.tag{display:inline-block;font-size:.76rem;font-weight:600;padding:1px 8px;border-radius:999px;margin-left:6px;vertical-align:middle;white-space:nowrap}
 .tag.chk{background:var(--seal-bg);color:var(--seal);border:1px solid var(--seal)}
 .tag.ok{background:var(--ok-bg);color:var(--ok)}
 .tag.cn{background:transparent;color:var(--cn);border:1px solid var(--cn)}
@@ -85,53 +111,64 @@ table{border-collapse:collapse;width:100%;font-size:.92rem}
 th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
 td.n,th.n{text-align:right;white-space:nowrap}
 tfoot td{font-weight:700;border-bottom:0}
-.act{font:inherit;font-weight:600;background:var(--ink);color:var(--sheet);border:0;border-radius:3px;padding:10px 16px;min-height:44px;cursor:pointer;margin-top:14px}
+.act{font:inherit;font-weight:600;background:var(--ink);color:var(--sheet);border:0;border-radius:10px;padding:10px 18px;min-height:44px;cursor:pointer;margin-top:14px}
 .small{font-size:.85rem;color:var(--ink2)}
 .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:.85rem;color:var(--ink2)}
 .legend i{display:inline-block;width:4px;height:14px;vertical-align:-2px;margin-right:5px}
-@media (max-width:420px){.sum{grid-template-columns:1fr}}
+@media (max-width:340px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
+<header class="bar"><div class="bar-in"><b>법인 설립 가이드</b><span id="today"></span></div></header>
 <div class="wrap">
-  <h1>법인 설립 가이드 생성기</h1>
-  <p class="lede">누가, 어디에, 무엇을 세우는지 고르고 기본 정보를 넣으면 절차, 서류, 기관, 비용 안내가 나옵니다.</p>
-  <p class="small" id="data-msg" style="margin-top:4px">규칙 데이터를 읽는 중입니다.</p>
 
-  <section aria-labelledby="h-track">
-    <h2 id="h-track">1. 어떤 설립인가요</h2>
-    <div class="q"><span class="lab">어디에 세우나요</span><div class="opts" id="o-where"></div></div>
-    <div class="q"><span class="lab">무엇을 세우나요</span><div class="opts" id="o-what"></div></div>
-    <div id="track-msg"></div>
-  </section>
-
-  <div id="guide" hidden>
-  <section aria-labelledby="h-in">
-    <h2 id="h-in">2. 기본 정보</h2>
-    <details style="margin-bottom:16px"><summary style="cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center">고객 회신에서 읽은 값 불러오기</summary>
-      <p class="hint">Claude가 자료요청서 회신을 읽어 만든 사건 데이터를 붙여넣으면 아래 항목이 채워집니다.</p>
-      <textarea id="imp" rows="4" style="font:inherit;font-size:.85rem;width:100%;margin-top:8px;border:1px solid var(--line);border-radius:3px;padding:8px;background:var(--sheet);color:var(--ink)" placeholder="사건 데이터를 여기에 붙여넣으세요"></textarea>
-      <button class="act" id="imp-go" type="button" style="margin-top:8px">항목 채우기</button>
-      <div id="imp-msg"></div>
-    </details>
-    <div id="inputs"></div>
+  <!-- 홈: 설립 유형·기본 정보 요약과 결과 카드 -->
+  <div class="view on" id="v-home">
+    <a class="case" href="#input" id="h-case"></a>
     <div id="warns"></div>
-  </section>
-
-  <div class="tabs" role="tablist" id="tabs"></div>
-  <section id="out" aria-live="polite">
-    <div class="panel on" id="p-proc"></div>
-    <div class="panel" id="p-doc"></div>
-    <div class="panel" id="p-ag"></div>
-    <div class="panel" id="p-cost"></div>
-    <div class="panel" id="p-chk"></div>
-  </section>
-  <button class="act" id="copy" type="button">안내 요약 복사</button>
-  <p class="small" id="copy-msg" style="margin-top:6px"></p>
+    <div class="grid" id="h-grid"></div>
+    <p class="small" id="copy-msg" style="margin-top:8px"></p>
+    <p class="small" id="data-msg" style="margin-top:16px">규칙 데이터를 읽는 중입니다.</p>
+    <p class="small" style="margin-top:8px">내부 검토용입니다. "확인필요" 표시가 있는 항목은 확정 전에 고객에게 그대로 안내하지 마세요. 입력한 값은 저장되지 않습니다.</p>
   </div>
 
-  <p class="small" style="margin-top:24px">내부 검토용입니다. "확인필요" 표시가 있는 항목은 확정 전에 고객에게 그대로 안내하지 마세요. 입력한 값은 저장되지 않습니다.</p>
+  <!-- 설립 유형과 기본 정보 입력 -->
+  <div class="view" id="v-input">
+    <div class="sub"><a class="back" href="#home">‹ 완료</a><h2>설립 유형과 기본 정보</h2></div>
+    <section aria-labelledby="h-track">
+      <h2 id="h-track">어떤 설립인가요</h2>
+      <div class="q"><span class="lab">어디에 세우나요</span><div class="opts" id="o-where"></div></div>
+      <div class="q"><span class="lab">무엇을 세우나요</span><div class="opts" id="o-what"></div></div>
+      <div id="track-msg"></div>
+    </section>
+    <section id="guide" hidden aria-labelledby="h-in">
+      <h2 id="h-in">기본 정보</h2>
+      <details style="margin-bottom:16px"><summary style="cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center">고객 회신에서 읽은 값 불러오기</summary>
+        <p class="hint">Claude가 자료요청서 회신을 읽어 만든 사건 데이터를 붙여넣으면 아래 항목이 채워집니다.</p>
+        <textarea id="imp" rows="4" style="font:inherit;font-size:.85rem;width:100%;margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--sheet);color:var(--ink)" placeholder="사건 데이터를 여기에 붙여넣으세요"></textarea>
+        <button class="act" id="imp-go" type="button" style="margin-top:8px">항목 채우기</button>
+        <div id="imp-msg"></div>
+      </details>
+      <div id="inputs"></div>
+      <div id="warns-in"></div>
+    </section>
+    <a class="act" href="#home" style="display:inline-flex;align-items:center;text-decoration:none">결과 보기</a>
+  </div>
+
+  <div class="view" id="v-proc"><div class="sub"><a class="back" href="#home">‹ 홈</a><h2>절차와 일정</h2></div><section><div id="p-proc"></div></section></div>
+  <div class="view" id="v-doc"><div class="sub"><a class="back" href="#home">‹ 홈</a><h2>서류</h2></div><section><div id="p-doc"></div></section></div>
+  <div class="view" id="v-ag"><div class="sub"><a class="back" href="#home">‹ 홈</a><h2>신청·제출 기관</h2></div><section><div id="p-ag"></div></section></div>
+  <div class="view" id="v-cost"><div class="sub"><a class="back" href="#home">‹ 홈</a><h2>비용</h2></div><section><div id="p-cost"></div></section></div>
+  <div class="view" id="v-chk"><div class="sub"><a class="back" href="#home">‹ 홈</a><h2>적용된 규칙과 확인필요</h2></div><section><div id="p-chk"></div></section></div>
 </div>
+
+<nav class="tabbar" aria-label="주 메뉴">
+  <a href="#home" data-view="home"><i aria-hidden="true">🏠</i>홈</a>
+  <a href="#proc" data-view="proc"><i aria-hidden="true">📋</i>절차</a>
+  <a href="#doc" data-view="doc"><i aria-hidden="true">📄</i>서류</a>
+  <a href="#cost" data-view="cost"><i aria-hidden="true">💰</i>비용</a>
+  <a href="#chk" data-view="chk"><i aria-hidden="true">⚠️</i>확인필요</a>
+</nav>
 
 <!-- 파일을 직접 열 때(file://) 쓰는 규칙 데이터 묶음. tools/build_data.py 가 data/ 의 JSON으로 만든다. -->
 <script src="data/bundle.js"></script>
@@ -213,7 +250,7 @@ function load(){
 }
 
 /* ---------- 상태 ---------- */
-var D=null, T=null, TRACK=null, V={}, FEE={}, tab="proc";
+var D=null, T=null, TRACK=null, V={}, FEE={};
 var STATUS={confirmed:"확정",pilot:"시범 적용",practice:"내부 원칙",needs_check:"확인필요",rough:"대략치",needs_data:"자료 없음"};
 function tagChk(){return '<span class="tag chk">확인필요</span>'}
 function tagStatus(s){
@@ -324,11 +361,11 @@ function renderTrack(){
  $("guide").hidden=!T;
  $("track-msg").innerHTML=tr?(T?'<p class="note">'+esc(tr.note)+'</p>':'<p class="warn">'+esc(tr.note||"준비 중입니다.")+'</p>'):'';
 }
-function renderWarn(c){$("warns").innerHTML=warnings(c).map(function(x){return '<p class="warn">'+esc(x)+'</p>'}).join("")}
+function renderWarn(c){var h=warnings(c).map(function(x){return '<p class="warn">'+esc(x)+'</p>'}).join("");$("warns").innerHTML=h;$("warns-in").innerHTML=h}
 function renderProc(c,p){
  var P=T.process, ph={};
  P.phases.forEach(function(x){ph[x.id]=x});
- var h='<h2>절차와 일정</h2><div class="sum"><div><b>'+p.on.length+'단계</b><span>이 사건에 해당하는 절차</span></div><div><b>약 '+p.tot[0]+'~'+p.tot[1]+'일</b><span>선행 관계 기준 단순 계산'+(p.undated.length?', 기간 미정 '+p.undated.length+'단계 제외':'')+'</span></div></div>';
+ var h='<div class="sum"><div><b>'+p.on.length+'단계</b><span>이 사건에 해당하는 절차</span></div><div><b>약 '+p.tot[0]+'~'+p.tot[1]+'일</b><span>선행 관계 기준 단순 계산'+(p.undated.length?', 기간 미정 '+p.undated.length+'단계 제외':'')+'</span></div></div>';
  h+='<div class="legend"><span><i style="background:var(--kr)"></i>한국 쪽</span><span><i style="background:var(--cn)"></i>중국 쪽 (고객)</span></div>';
  if(p.undated.length)h+='<p class="note">기간 자료가 없는 단계는 일정 계산에서 뺐습니다: '+esc(p.undated.map(function(s){return s.task}).join(", "))+'. 실제 일정은 이 단계들에 좌우될 수 있습니다.</p>';
  var cur=null;
@@ -358,7 +395,7 @@ function submitTo(list){
 function renderDoc(c){
  var DD=T.documents, on=docsOn(c), extra=effectsList(c,"documents_extra"), dont=effectsList(c,"client_guide_dont");
  var nNot=on.filter(function(d){return d.notarize}).length;
- var h='<h2>서류</h2><div class="sum"><div><b>'+(on.length+extra.length)+'종</b><span>준비할 서류</span></div><div><b>'+nNot+'종</b><span>공증과 아포스티유가 필요한 서류</span></div></div>';
+ var h='<div class="sum"><div><b>'+(on.length+extra.length)+'종</b><span>준비할 서류</span></div><div><b>'+nNot+'종</b><span>공증과 아포스티유가 필요한 서류</span></div></div>';
  if(dont.length)h+='<div class="note"><b>고객에게 꼭 알릴 것</b><ul class="plain">'+dont.map(function(x){return '<li>'+esc(x.text)+'</li>'}).join("")+'</ul></div>';
  on.forEach(function(d){
   var nt=(d.notarize?'필요':'불요')+(d.notarize_note?' ('+d.notarize_note+')':'')+' / 아포스티유 '+(d.apostille?'필요':'불요');
@@ -372,7 +409,7 @@ function renderDoc(c){
  $("p-doc").innerHTML=h;
 }
 function renderAg(c,p){
- var h='<h2>신청·제출 기관</h2>';
+ var h='';
  agenciesOn(p).forEach(function(a){
   h+='<div class="doc"><h3>'+esc(a.name)+'<span class="tag '+(a.side==="CN"?'cn">중국':'kr">한국')+'</span>'+(a.status==="needs_check"?tagChk():'')+'</h3><dl class="kv"><dt>역할</dt><dd>'+esc(a.role)+'</dd><dt>누가</dt><dd>'+esc(a.who_goes)+'</dd><dt>고객 설명</dt><dd>'+esc(a.client_text)+'</dd>'+(a.open?'<dt>남은 확인</dt><dd>'+esc(a.open)+'</dd>':'')+'</dl></div>';
  });
@@ -380,7 +417,7 @@ function renderAg(c,p){
 }
 function renderCost(c){
  var C=T.costs, t=taxes(c), PB=C.paid_by_values||{};
- var h='<h2>비용</h2><h3>'+esc(C.categories.tax)+'</h3><div class="scroll"><table><thead><tr><th>항목</th><th>근거</th><th class="n">금액</th></tr></thead><tbody>';
+ var h='<h3>'+esc(C.categories.tax)+'</h3><div class="scroll"><table><thead><tr><th>항목</th><th>근거</th><th class="n">금액</th></tr></thead><tbody>';
  t.rows.forEach(function(r){
   var i=r.item;
   h+='<tr><td>'+esc(i.name)+(i.status==="needs_check"?tagChk():'')+'</td><td>'+esc(r.amount==null?i.note:i.basis)+'</td><td class="n">'+(r.amount==null?'반영 안 함':won(r.amount))+'</td></tr>';
@@ -399,35 +436,77 @@ function renderCost(c){
  (C.notes||[]).forEach(function(x){h+='<p class="small" style="margin-top:6px">'+esc(x)+'</p>'});
  $("p-cost").innerHTML=h;
 }
-function renderChk(c,p){
- var h='<h2>적용된 규칙과 확인필요</h2>';
- rulesOn(c).forEach(function(r){
-  h+='<div class="doc"><h3>'+esc(r.id)+' '+esc(r.topic||"")+tagStatus(r.status)+'</h3><p style="margin-top:4px">'+esc(r.text)+'</p>'+(r.basis?'<p class="meta">근거: '+esc(r.basis)+'</p>':'')+'</div>';
- });
+function checkOthers(c,p){
  var other=[];
  p.on.forEach(function(s){if(s.status==="needs_check")other.push(s.id+" "+s.task)});
  docsOn(c).forEach(function(d){if(d.status==="needs_check")other.push(d.id+" "+d.name+(d.note?": "+d.note:""))});
  agenciesOn(p).forEach(function(a){if(a.status==="needs_check")other.push(a.name+(a.open?": "+a.open:""))});
  T.costs.items.forEach(function(i){if(i.status==="needs_check")other.push(i.id+" "+i.name+(i.note?": "+i.note:""))});
+ return other;
+}
+function renderChk(c,p){
+ var h='';
+ rulesOn(c).forEach(function(r){
+  h+='<div class="doc"><h3>'+esc(r.id)+' '+esc(r.topic||"")+tagStatus(r.status)+'</h3><p style="margin-top:4px">'+esc(r.text)+'</p>'+(r.basis?'<p class="meta">근거: '+esc(r.basis)+'</p>':'')+'</div>';
+ });
+ var other=checkOthers(c,p);
  if(other.length)h+='<h3 style="margin-top:20px">이 사건의 절차·서류·기관·비용 중 확인필요</h3><ul class="plain">'+other.map(function(x){return '<li>'+esc(x)+'</li>'}).join("")+'</ul>';
  var oi=T.rules.open_items||[];
  if(oi.length)h+='<h3 style="margin-top:20px">모든 사건에 남아 있는 미해결 항목</h3><ul class="plain">'+oi.map(function(x){return '<li>'+esc(x.text)+' <span class="small">('+esc(x.id)+(x.owner?', 담당 '+esc(x.owner):'')+')</span></li>'}).join("")+'</ul>';
  $("p-chk").innerHTML=h;
 }
-var TABS=[["proc","절차"],["doc","서류"],["ag","기관"],["cost","비용"],["chk","확인필요"]];
-function renderTabs(){
- $("tabs").innerHTML=TABS.map(function(t){return '<button type="button" role="tab" data-tab="'+t[0]+'" aria-selected="'+(tab===t[0])+'">'+t[1]+'</button>'}).join("");
- TABS.forEach(function(t){$("p-"+t[0]).className="panel"+(tab===t[0]?" on":"")});
+/* 홈: 입력 요약 한 줄과 결과 카드 */
+function plain(label){return String(label).replace(/\s*\([^)]*\)\s*$/,"")}
+function inputChips(){
+ return shownInputs().map(function(i){
+  var v=V[i.key], name=i.short||plain(i.label);
+  if(v===""||v==null)return "";
+  if(i.type==="number"){var u=/\(([^)]*)\)\s*$/.exec(i.label);u=u?u[1]:"";return name+" "+(u==="원"?(korAmt(Number(v)||0)||won(Number(v)||0)):v+u)}
+  if(optsOf(i).length)return name+" "+plain(optLabel(i,v));
+  return name+" "+v;
+ }).filter(Boolean);
+}
+function renderHome(c,p){
+ var tr=null;D.tracks.tracks.forEach(function(t){if(t.id===TRACK)tr=t});
+ var where="";D.tracks.where.forEach(function(w){if(tr&&w.id===tr.where)where=w.label});
+ var title=tr?where+" · "+tr.label:"설립 유형을 고르세요";
+ $("h-case").innerHTML='<div class="top"><b>'+esc(title)+'</b><span>수정 ›</span></div>'
+  +(T?'<div class="chips">'+inputChips().map(function(x){return '<span>'+esc(x)+'</span>'}).join("")+'</div>':(tr?'<p class="warn">'+esc(tr.note||"준비 중입니다.")+'</p>':''));
+ if(!T){$("h-grid").innerHTML="";$("warns").innerHTML="";return}
+ var t=taxes(c), docs=docsOn(c), extra=effectsList(c,"documents_extra"), ag=agenciesOn(p), kr=ag.filter(function(a){return a.side!=="CN"}).length;
+ var nChk=rulesOn(c).filter(function(r){return r.status==="needs_check"}).length+checkOthers(c,p).length;
+ var cards=[
+  ["proc","절차",p.on.length+"단계","약 "+p.tot[0]+"~"+p.tot[1]+"일","--kr"],
+  ["doc","서류",(docs.length+extra.length)+"종","공증·아포스티유 "+docs.filter(function(d){return d.notarize}).length+"종","--cn"],
+  ["cost","비용",won(t.sum),"세금·공과금 자동 계산","--ok"],
+  ["ag","기관",ag.length+"곳","한국 "+kr+" · 중국 "+(ag.length-kr),"--ink2"],
+  ["chk","확인필요",nChk+"건","확정 전 고객 안내 금지","--seal"]
+ ];
+ $("h-grid").innerHTML=cards.map(function(x){
+  return '<a class="card" href="#'+x[0]+'" style="--c:var('+x[4]+')"><span class="k">'+esc(x[1])+'</span><b>'+esc(x[2])+'</b><span class="s">'+esc(x[3])+'</span></a>';
+ }).join("")+'<button class="card" id="copy" type="button" style="--c:var(--ink)"><span class="k">안내 요약</span><b>복사</b><span class="s">메일·메신저에 붙여넣기</span></button>';
 }
 function renderOut(){
  var c=ctx(), p=plan(c);
- renderWarn(c);renderProc(c,p);renderDoc(c);renderAg(c,p);renderCost(c);renderChk(c,p);
+ renderWarn(c);renderHome(c,p);renderProc(c,p);renderDoc(c);renderAg(c,p);renderCost(c);renderChk(c,p);
 }
 function render(){
  renderTrack();
- if(!T)return;
- paintInputs();renderOut();renderTabs();
+ if(!T){renderHome();return}
+ paintInputs();renderOut();
 }
+
+/* ---------- 화면 전환 ----------
+   주소 끝(#home, #doc ...)으로 화면을 바꾼다. iPhone에서 뒤로 밀기도 그대로 작동한다. */
+var VIEWS=["home","input","proc","doc","ag","cost","chk"];
+function showView(){
+ var v=location.hash.slice(1);
+ if(VIEWS.indexOf(v)<0||(!T&&v!=="input"))v="home";
+ VIEWS.forEach(function(x){$("v-"+x).className="view"+(x===v?" on":"")});
+ [].forEach.call(document.querySelectorAll(".tabbar a"),function(a){if(a.dataset.view===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+ window.scrollTo(0,0);
+}
+window.addEventListener("hashchange",showView);
 function selectTrack(id){
  TRACK=id;T=D.data[id]||null;
  if(T){initValues();buildInputs()}
@@ -483,7 +562,6 @@ document.addEventListener("click",function(e){
  if(b.dataset.where){var ts=tracksAt(b.dataset.where);if(ts.length)selectTrack(ts[0].id)}
  else if(b.dataset.track)selectTrack(b.dataset.track);
  else if(b.dataset.in){V[b.dataset.in]=JSON.parse(b.dataset.v);render()}
- else if(b.dataset.tab){tab=b.dataset.tab;renderTabs()}
  else if(b.id==="imp-go"){
   var box=$("imp-msg");
   try{
@@ -514,12 +592,13 @@ function fail(err){
 }
 function safe(f){try{f()}catch(err){fail(err)}}
 
+(function(){var d=new Date();$("today").textContent=(d.getMonth()+1)+"월 "+d.getDate()+"일"})();
 load().then(function(data){
  D=data;
  var first=null;D.tracks.tracks.forEach(function(t){if(!first&&t.ready&&D.data[t.id])first=t.id});
  var k=first&&D.data[first].inputs;
  $("data-msg").textContent=k?"규칙 데이터: "+(k.source||"")+" / 갱신 "+(k.updated||"")+(D.from==="bundle"?" (묶음 파일에서 읽음)":""):"";
- safe(function(){selectTrack(first||D.tracks.tracks[0].id)});
+ safe(function(){selectTrack(first||D.tracks.tracks[0].id);showView()});
 },function(err){
  $("data-msg").textContent="";
  fail(Error("규칙 데이터를 읽지 못했습니다. "+(err&&err.message?err.message:err)));

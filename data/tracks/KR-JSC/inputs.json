@@ -4,10 +4,11 @@
   "version": "0.2",
   "updated": "2026-10-05",
   "source": "한국법인 설립 표준키트 v0.7 (2026-09-28)",
-  "note": "1층 입력: 분기를 결정하는 항목만. 개인정보 없음. 2층(문서 생성용 상세 항목)은 필드사전을 옮길 때 추가한다. import_key와 alias는 docgen.py read 결과(program_inputs)의 짧은 키·값을 이 파일의 키·값으로 바꾸는 데 쓴다. screen이 false인 항목은 화면에 표시하지 않는다.",
+  "note": "1층 입력: 분기를 결정하는 항목만. 개인정보 없음. 2층(문서 생성용 상세 항목)은 필드사전을 옮길 때 추가한다. import_key와 alias는 docgen.py read 결과(program_inputs)의 짧은 키·값을 이 파일의 키·값으로 바꾸는 데 쓴다. screen이 false인 항목은 화면에 표시하지 않는다. short는 홈 화면 요약에 쓰는 짧은 이름.",
   "inputs": [
     {
       "key": "shareholder_type",
+      "short": "주주",
       "import_key": "sh",
       "label": "출자 주체(주주) 유형",
       "type": "select",
@@ -22,6 +23,7 @@
     },
     {
       "key": "capital_krw",
+      "short": "자본금",
       "import_key": "cap",
       "label": "자본금(원)",
       "type": "number",
@@ -32,6 +34,7 @@
     },
     {
       "key": "ownership_pct",
+      "short": "지분",
       "import_key": "own",
       "label": "외국 투자자 지분율(%)",
       "type": "number",
@@ -41,6 +44,7 @@
     },
     {
       "key": "director_count",
+      "short": "이사",
       "import_key": "dir",
       "label": "이사 수",
       "type": "select",
@@ -56,6 +60,7 @@
     },
     {
       "key": "has_auditor",
+      "short": "감사",
       "import_key": "aud",
       "label": "감사 선임 여부",
       "type": "boolean",
@@ -70,6 +75,7 @@
     },
     {
       "key": "officers_location",
+      "short": "서명",
       "import_key": "loc",
       "label": "임원 서명 장소",
       "type": "select",
@@ -82,6 +88,7 @@
     },
     {
       "key": "rep_director_residence",
+      "short": "대표 주소",
       "import_key": "res",
       "label": "대표이사 거주지·신분증",
       "type": "select",
@@ -95,6 +102,7 @@
     },
     {
       "key": "head_office_zone",
+      "short": "본점",
       "import_key": "zone",
       "label": "본점 소재지 권역",
       "type": "select",
@@ -107,6 +115,7 @@
     },
     {
       "key": "office_type",
+      "short": "사무실",
       "import_key": "off",
       "label": "사무실 형태",
       "type": "select",
@@ -119,6 +128,7 @@
     },
     {
       "key": "restricted_business",
+      "short": "제한 업종",
       "import_key": "biz",
       "label": "사업목적에 외국인투자 제한 업종 또는 인허가 업종 포함",
       "type": "select",
@@ -133,6 +143,7 @@
     },
     {
       "key": "d8_needed",
+      "short": "D-8",
       "import_key": "d8",
       "label": "파견 임원의 D-8 비자 필요",
       "type": "boolean",
@@ -145,6 +156,7 @@
     },
     {
       "key": "pre_registration_cost_method",
+      "short": "등기 전 비용",
       "label": "등기 전 비용 지급 방식",
       "type": "select",
       "required": false,
@@ -159,6 +171,7 @@
     },
     {
       "key": "preferred_bank",
+      "short": "선호 은행",
       "label": "고객 선호 은행",
       "type": "text",
       "required": false,
