@@ -51,8 +51,8 @@
     {"id": "P3-3", "task": "모회사 발급서류 요청", "actor": ["lawyer"], "prereq": ["P1-2"], "output": "요청 목록", "days": [1, 1], "applies": "is_foreign_company_shareholder", "note": "영업집조·이사회결의·권한증명·정관"},
     {"id": "P3-4", "task": "서명·공증 안내서 발송", "actor": ["lawyer"], "prereq": ["P3-2"], "output": "안내서", "days": [1, 1], "applies": "always", "note": "원본 부수·서명 위치·공증 여부 명시"},
 
-    {"id": "P4-1", "task": "고객 서명·날인", "actor": ["client"], "prereq": ["P3-4"], "output": "서명본", "days": [3, 7], "applies": "always", "note": "상장사는 내부 결재 기간 추가"},
-    {"id": "P4-2", "task": "현지 공증 + 아포스티유", "actor": ["client"], "prereq": ["P4-1"], "output": "공증·아포스티유본", "days": [7, 14], "applies": "officers_location == 'abroad' || is_foreign_company_shareholder || shareholder_type == 'foreign_individual'"},
+    {"id": "P4-1", "task": "고객 서명·날인", "actor": ["client"], "prereq": ["P3-4"], "output": "서명본", "days": [3, 7], "applies": "always", "side": "CN", "note": "상장사는 내부 결재 기간 추가"},
+    {"id": "P4-2", "task": "현지 공증 + 아포스티유", "actor": ["client"], "prereq": ["P4-1"], "output": "공증·아포스티유본", "days": [7, 14], "side": "CN", "applies": "officers_location == 'abroad' || is_foreign_company_shareholder || shareholder_type == 'foreign_individual'"},
     {"id": "P4-3", "task": "원본 특송·수령·대장 기록", "actor": ["client", "legal_support"], "prereq": ["P4-2"], "output": "원본 관리 대장", "days": [3, 5], "applies": "always", "note": "유효기간 3개월 관리"},
 
     {"id": "P5-1", "task": "외국 발급서류·공증서 한국어 번역(율촌 번역인 확인)", "actor": ["legal_support"], "prereq": ["P4-3"], "output": "번역문", "days": [2, 3], "applies": "is_foreign_company_shareholder", "note": "번역공증 불요(R22). 표준키트의 단계명은 '번역공증'이나 v0.6 이후 번역인 확인 방식으로 확정"},

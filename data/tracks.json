@@ -1,0 +1,19 @@
+{
+  "version": "0.1",
+  "updated": "2026-10-05",
+  "note": "첫 화면의 '어디에 + 무엇을' 선택지. ready가 true인 트랙만 data/tracks/<id>/ 의 규칙 데이터를 읽는다.",
+  "where": [
+    {"id": "KR", "label": "한국"},
+    {"id": "CN", "label": "중국"}
+  ],
+  "tracks": [
+    {"id": "KR-JSC", "where": "KR", "label": "주식회사", "ready": true, "note": "외국 투자자의 한국 주식회사 설립. 선례 3건과 표준키트를 근거로 합니다."},
+    {"id": "KR-LLC", "where": "KR", "label": "유한회사", "ready": false, "note": "한국 유한회사 트랙은 규칙 자료가 아직 없습니다."},
+    {"id": "KR-BR", "where": "KR", "label": "지점", "ready": false, "note": "한국 지점 트랙은 규칙 자료가 아직 없습니다."},
+    {"id": "KR-LO", "where": "KR", "label": "연락사무소", "ready": false, "note": "한국 연락사무소 트랙은 규칙 자료가 아직 없습니다."},
+    {"id": "CN-WFOE", "where": "CN", "label": "독자법인", "ready": false, "note": "중국 독자법인 트랙은 선례 1건(상하이 린강)의 절차와 입력 항목을 정리한 단계입니다. 데이터 파일로 옮긴 뒤 열립니다."},
+    {"id": "CN-JV", "where": "CN", "label": "합자법인", "ready": false, "note": "중국 합자법인 트랙은 선례 자료가 없습니다."},
+    {"id": "CN-RO", "where": "CN", "label": "대표처", "ready": false, "note": "중국 대표처 트랙은 선례 1건(동관)의 필요서류를 정리한 단계입니다. 데이터 파일로 옮긴 뒤 열립니다."},
+    {"id": "CN-BRANCH", "where": "CN", "label": "분공사", "ready": false, "note": "중국 분공사 트랙은 선례 자료가 없습니다."}
+  ]
+}

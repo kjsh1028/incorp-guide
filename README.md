@@ -6,9 +6,14 @@
 - `tools/docgen.py`: 고객 문서 생성(자료요청서, 서명 및 공증 서류 안내, 진행 보고)과 자료요청서 회신 판독.
 - `tools/templates/`: 표준 템플릿(국문·중문). 고객별 값은 `{{...}}` 빈칸.
 - `tools/firm_profile.json`: 발신 변호사와 원본 수령인 정보.
-- `data/tracks/`: 트랙별 규칙 데이터(JSON).
+- `data/tracks.json`: 첫 화면의 트랙 목록.
+- `data/tracks/`: 트랙별 규칙 데이터(JSON). 화면은 이 파일들을 읽어 그린다.
+- `data/bundle.js`: 위 JSON을 묶은 파일(자동 생성). 화면을 파일로 열 때 쓴다.
+- `tools/build_data.py`: JSON을 고친 뒤 실행해 `data/bundle.js` 를 다시 만든다.
 
 ## 쓰는 법
+
+    python tools/build_data.py          규칙 JSON을 고친 뒤 실행
 
     python tools/docgen.py request  tools/sample_case.json out/
     python tools/docgen.py signing  tools/sample_case.json out/
