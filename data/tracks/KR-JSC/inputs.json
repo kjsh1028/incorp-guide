@@ -1,0 +1,178 @@
+{
+  "track": "KR-JSC",
+  "title": "외국 투자자의 한국 주식회사 설립",
+  "version": "0.1",
+  "updated": "2026-10-05",
+  "source": "한국법인 설립 표준키트 v0.7 (2026-09-28)",
+  "note": "1층 입력: 분기를 결정하는 항목만. 개인정보 없음. 2층(문서 생성용 상세 항목)은 필드사전을 옮길 때 추가한다.",
+  "inputs": [
+    {
+      "key": "shareholder_type",
+      "label": "출자 주체(주주) 유형",
+      "type": "select",
+      "required": true,
+      "options": [
+        {"value": "cn_company_direct", "label": "중국 법인(본사 직접 출자)"},
+        {"value": "offshore_holding", "label": "해외 지주사(싱가포르·홍콩 등)"},
+        {"value": "tax_haven_company", "label": "조세회피지 법인(케이만 등)"},
+        {"value": "foreign_individual", "label": "외국 개인"}
+      ],
+      "rules": ["R01", "R02", "R03", "R04"]
+    },
+    {
+      "key": "capital_krw",
+      "label": "자본금(원)",
+      "type": "number",
+      "required": true,
+      "rules": ["R05", "R06", "R07", "R08"],
+      "hint": "1억 원과 10억 원이 분기 기준"
+    },
+    {
+      "key": "ownership_pct",
+      "label": "외국 투자자 지분율(%)",
+      "type": "number",
+      "required": true,
+      "default": 100,
+      "rules": ["R05"]
+    },
+    {
+      "key": "director_count",
+      "label": "이사 수",
+      "type": "select",
+      "required": true,
+      "options": [
+        {"value": "1", "label": "1인"},
+        {"value": "2", "label": "2인"},
+        {"value": "3plus", "label": "3인 이상"}
+      ],
+      "rules": ["R07", "R08", "R15"],
+      "warn_if": "capital_krw >= 1000000000 && director_count != '3plus'",
+      "warn_text": "자본금 10억 원 이상이면 이사 3인 이상이 필요합니다."
+    },
+    {
+      "key": "has_auditor",
+      "label": "감사 선임 여부",
+      "type": "boolean",
+      "required": true,
+      "rules": ["R07", "R08"],
+      "warn_if": "capital_krw >= 1000000000 && has_auditor == false",
+      "warn_text": "자본금 10억 원 이상이면 감사가 필수입니다."
+    },
+    {
+      "key": "officers_location",
+      "label": "임원 서명 장소",
+      "type": "select",
+      "required": true,
+      "options": [
+        {"value": "abroad", "label": "해외 거주(현지 서명)"},
+        {"value": "visit_korea", "label": "한국 체류 중 율촌 방문 서명"}
+      ],
+      "rules": ["R09", "R10"]
+    },
+    {
+      "key": "rep_director_residence",
+      "label": "대표이사 거주지·신분증",
+      "type": "select",
+      "required": true,
+      "options": [
+        {"value": "cn_mainland", "label": "중국 대륙 거주(거민신분증에 주소 있음)"},
+        {"value": "other_or_no_address", "label": "홍콩·마카오·기타 외국 또는 신분증에 주소 없음"}
+      ],
+      "rules": ["R16"],
+      "hint": "대표이사 주소는 등기사항. 늦게 확인하면 공증에 수주가 걸릴 수 있어 첫 단계에서 확인"
+    },
+    {
+      "key": "head_office_zone",
+      "label": "본점 소재지 권역",
+      "type": "select",
+      "required": true,
+      "options": [
+        {"value": "overcrowding", "label": "과밀억제권역(서울 등, 산업단지 제외)"},
+        {"value": "other", "label": "그 외 지역 또는 산업단지"}
+      ],
+      "rules": ["R11"]
+    },
+    {
+      "key": "office_type",
+      "label": "사무실 형태",
+      "type": "select",
+      "required": true,
+      "options": [
+        {"value": "independent", "label": "독립 사무실"},
+        {"value": "virtual_shared", "label": "비상주·공유오피스"}
+      ],
+      "rules": ["R12"]
+    },
+    {
+      "key": "restricted_business",
+      "label": "사업목적에 외국인투자 제한 업종 또는 인허가 업종 포함",
+      "type": "select",
+      "required": true,
+      "options": [
+        {"value": "yes", "label": "포함"},
+        {"value": "no", "label": "없음"},
+        {"value": "unknown", "label": "아직 모름"}
+      ],
+      "rules": ["R13", "R19"]
+    },
+    {
+      "key": "d8_needed",
+      "label": "파견 임원의 D-8 비자 필요",
+      "type": "boolean",
+      "required": true,
+      "rules": ["R14"]
+    },
+    {
+      "key": "pre_registration_cost_method",
+      "label": "등기 전 비용 지급 방식",
+      "type": "select",
+      "required": false,
+      "options": [
+        {"value": "yulchon_advance", "label": "율촌 대납(소액만)"},
+        {"value": "client_remit", "label": "고객 선송금"},
+        {"value": "korean_affiliate", "label": "한국 관계사 지급"},
+        {"value": "undecided", "label": "미정"}
+      ],
+      "rules": ["R17"]
+    },
+    {
+      "key": "preferred_bank",
+      "label": "고객 선호 은행",
+      "type": "text",
+      "required": false,
+      "rules": ["R20"],
+      "hint": "고객 요청서에는 은행명을 먼저 제시하지 않고 선호 유무만 질문"
+    },
+    {
+      "key": "output_language",
+      "label": "고객용 출력 언어",
+      "type": "select",
+      "required": true,
+      "default": "zh",
+      "options": [
+        {"value": "ko", "label": "한국어"},
+        {"value": "zh", "label": "중국어"},
+        {"value": "en", "label": "영어"}
+      ]
+    }
+  ],
+  "derived": [
+    {
+      "key": "is_foreign_company_shareholder",
+      "expr": "shareholder_type in ['cn_company_direct','offshore_holding','tax_haven_company']"
+    },
+    {
+      "key": "is_fdi",
+      "expr": "capital_krw >= 100000000 && ownership_pct >= 10",
+      "label": "외국인투자촉진법상 외국인투자 해당"
+    },
+    {
+      "key": "capital_tier",
+      "expr": "capital_krw >= 1000000000 ? 'gte_1bn' : 'lt_1bn'"
+    },
+    {
+      "key": "needs_cn_odi",
+      "expr": "shareholder_type == 'cn_company_direct'"
+    }
+  ]
+}

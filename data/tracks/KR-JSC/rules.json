@@ -1,0 +1,255 @@
+{
+  "track": "KR-JSC",
+  "version": "0.1",
+  "updated": "2026-10-05",
+  "source": "한국법인 설립 표준키트 v0.7 분기규칙·확인필요 시트",
+  "status_values": {
+    "confirmed": "법령 또는 선례·법무지원팀 확인 완료",
+    "pilot": "내부 확인은 됐으나 첫 사건(선례 C) 진행 중이라 결과 반영 예정",
+    "needs_check": "확인필요. 화면에 단정하지 않고 표시만 한다",
+    "practice": "율촌 내부 업무 원칙(법령 아님)"
+  },
+  "rules": [
+    {
+      "id": "R01",
+      "topic": "주주 유형",
+      "when": "shareholder_type == 'cn_company_direct'",
+      "text": "중국 ODI 선행. 공증+아포스티유는 율촌 작성 서명서류(A1~A6)만. 영업집조·주주명부(실제소유자)·세무번호 증명·법정대표인 여권은 스캔본. 이사회결의·정관은 사본. 한국어 번역은 율촌(번역인 확인, 번역공증 불요).",
+      "effects": {"process_add": ["P1-3", "P6-1", "P6-2", "P6-3"], "documents": ["A1", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]},
+      "status": "pilot",
+      "basis": "법무지원팀 최종확인(2026-09-28). 선례 C가 첫 사례",
+      "region": "KR 전국 / CN 측은 지역별 확인필요"
+    },
+    {
+      "id": "R02",
+      "topic": "주주 유형",
+      "when": "shareholder_type == 'offshore_holding'",
+      "text": "해당국 등록증명(예: 싱가포르 Bizfile). 실제소유자 확인(최대주주가 법인이면 그 주주명부 추가). 위임장 공증+아포스티유.",
+      "effects": {"documents": ["A1", "C2", "C4"], "documents_extra": ["해당국 등록증명", "상위 주주명부(최대주주가 법인인 경우)"]},
+      "status": "confirmed",
+      "basis": "선례 A(은행 서류목록)",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R03",
+      "topic": "주주 유형",
+      "when": "shareholder_type == 'tax_haven_company'",
+      "text": "R02에 더해 등록대리인 발급 재직증명 등 은행 KYC 강화에 대비.",
+      "effects": {"inherits": "R02", "documents_extra": ["등록대리인 발급 재직증명(Certificate of Incumbency)"], "flags": ["bank_kyc_enhanced"]},
+      "status": "confirmed",
+      "basis": "선례 B",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R04",
+      "topic": "주주 유형",
+      "when": "shareholder_type == 'foreign_individual'",
+      "text": "여권 사본(공증 불요) + 위임장 공증+아포스티유. 자금출처와 송금인 명의 일치 확인.",
+      "effects": {"documents": ["A1"], "documents_extra": ["주주 여권 사본"], "flags": ["check_fund_source", "remitter_name_match"]},
+      "status": "confirmed",
+      "basis": "선례 D",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R05",
+      "topic": "투자 규모",
+      "when": "capital_krw >= 100000000 && ownership_pct >= 10",
+      "text": "외국인투자촉진법상 외국인투자에 해당. 외국인투자신고와 외국인투자기업 등록 필요. D-8 비자의 기반.",
+      "effects": {"process_add": ["P8-1", "P12-1"]},
+      "status": "confirmed",
+      "basis": "외국인투자촉진법. 등록 기한은 시행령 제27조 제1항(납입 완료일부터 60일 이내)",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R06",
+      "topic": "투자 규모",
+      "when": "capital_krw < 100000000",
+      "text": "외국인투자촉진법상 외국인투자에 해당하지 않음. 외국환거래법상 절차는 별도 확인필요.",
+      "effects": {"process_skip": ["P8-1", "P12-1"], "flags": ["fx_act_procedure_check"]},
+      "status": "needs_check",
+      "basis": "문의 유형으로만 접수. 선례 없음",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R07",
+      "topic": "자본금",
+      "when": "capital_krw >= 1000000000",
+      "text": "이사 3인 이상·이사회·감사 필수. 주금납입보관증명서 필수. 정관과 의사록에 공증인 인증 필요.",
+      "effects": {"require": {"director_count": "3plus", "has_auditor": true}, "flags": ["share_payment_custody_cert", "notary_cert_articles_minutes"]},
+      "status": "confirmed",
+      "basis": "상법. 법령 확인(2026-09-26)",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R08",
+      "topic": "자본금",
+      "when": "capital_krw < 1000000000",
+      "text": "이사 1~2인 가능(이사회 생략 가능). 감사 생략 가능. 잔고증명서로 주금납입보관증명서 대체 가능. 정관·의사록 공증인 인증 불요.",
+      "effects": {"flags": ["balance_cert_ok", "no_notary_cert_articles_minutes"]},
+      "status": "confirmed",
+      "basis": "상법 제292조 단서, 공증인법 제66조의2 제1항 제1호",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R09",
+      "topic": "임원 소재",
+      "when": "officers_location == 'abroad'",
+      "text": "취임승낙서·인감신고서·위임장을 현지에서 공증+아포스티유. 주소 증명 첨부(R16 참조).",
+      "effects": {"process_add": ["P4-2"], "documents": ["A2", "A3", "A4", "A5", "A6"]},
+      "status": "confirmed",
+      "basis": "선례 A",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R10",
+      "topic": "임원 소재",
+      "when": "officers_location == 'visit_korea'",
+      "text": "임원이 한국 체류 중 율촌을 방문해 서명하는 경우 해외 공증·아포스티유를 생략할 수 있는지는 확인필요(외국인등록증 보유 시).",
+      "effects": {"flags": ["skip_overseas_notarization_check"]},
+      "status": "needs_check",
+      "basis": "선례 D 회의에서 논의만 됨",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R11",
+      "topic": "본점 소재지",
+      "when": "head_office_zone == 'overcrowding'",
+      "text": "등록면허세 3배 중과(0.4% → 1.2%, 지방교육세 포함 약 1.44%). 설립 후 5년 내 증자, 권역 밖에서 5년 내 전입도 중과. 자료요청서 첨부 세액표로 안내. 예외: 중과 제외 업종(시행령 제26조).",
+      "effects": {"cost_multiplier": {"registration_tax": 3}},
+      "status": "confirmed",
+      "basis": "지방세법 제28조 제2항. 법령 확인(2026-09-27)",
+      "region": "과밀억제권역(산업단지 제외)"
+    },
+    {
+      "id": "R12",
+      "topic": "본점 형태",
+      "when": "office_type == 'virtual_shared'",
+      "text": "고객에게 비권장으로 안내. 사업자등록 현장확인·보완·거부 가능, 법인계좌 심사 강화, D-8 독립 사무실 불인정(KOTRA IKP는 인정). 최소 계약기간과 호실 기재 확인.",
+      "effects": {"flags": ["warn_virtual_office"]},
+      "status": "needs_check",
+      "basis": "비상주 사무실로 외국인투자기업 사업자등록이 가능한지 최근 실무를 법무지원팀에 확인 중(Q01-D)",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R13",
+      "topic": "사업목적",
+      "when": "restricted_business in ['yes','unknown']",
+      "text": "외국인투자 비율 제한과 별도 인허가를 검토. 설립 직후 실제 사업 기준으로 사업목적을 최소화하도록 권고.",
+      "effects": {"process_emphasis": ["P1-4"], "flags": ["restricted_business_review"]},
+      "status": "confirmed",
+      "basis": "실무 원칙",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R14",
+      "topic": "파견 임원",
+      "when": "d8_needed == true",
+      "text": "투자액·자금출처 증빙 요건을 별도 검토. 독립 사무실 필요.",
+      "effects": {"process_add": ["P12-3"], "require": {"office_type": "independent"}},
+      "status": "needs_check",
+      "basis": "세부 요건은 사건별 확인",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R15",
+      "topic": "이사 수",
+      "when": "always",
+      "text": "1인: 대표이사 없음, 사내이사가 회사를 대표, 서명서류 직함은 'Director', 본점은 이사 결정서로 정함. 2인: 각자 대표가 원칙, 대표이사를 두려면 정관에 근거 필요, 본점은 이사 결정서. 3인 이상: 이사회 의사록으로 대표이사 선임과 본점 결정.",
+      "effects": {
+        "by_director_count": {
+          "1": {"rep_title": "Director", "head_office_decision": "이사 결정서", "board": false},
+          "2": {"rep_title": "정관에 따라", "head_office_decision": "이사 결정서", "board": false},
+          "3plus": {"rep_title": "Representative Director", "head_office_decision": "이사회 의사록", "board": true}
+        }
+      },
+      "status": "confirmed",
+      "basis": "상법 제383조 제6항. 선례 A의 이사 수는 확인필요",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R16",
+      "topic": "대표이사 주소",
+      "when": "always",
+      "text": "중국 대륙 거주자: 거민신분증 앞뒤면 사본(여권으로 대체 불가). 그 외(홍콩·마카오·외국인) 또는 신분증에 주소가 없는 경우: 공증+아포스티유 주소증명을 별도로 준비. 첫 자료요청서에서 조기 확보. 취임승낙서·인감신고서의 주소와 일치해야 함.",
+      "effects": {
+        "by_rep_director_residence": {
+          "cn_mainland": {"documents_extra": ["거민신분증 앞뒤면 사본"]},
+          "other_or_no_address": {"documents": ["B1"], "flags": ["address_proof_early"]}
+        }
+      },
+      "status": "confirmed",
+      "basis": "과거 홍콩 건 경험",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R17",
+      "topic": "등기 전 비용",
+      "when": "always",
+      "text": "자본금은 등기와 법인계좌 개설 전에는 쓸 수 없음. 등록면허세·임대 계약금·보증금·실비의 지급 방식을 자료요청서에서 선택받음(율촌 대납은 소액만 / 고객 선송금 / 한국 관계사 지급).",
+      "effects": {"process_add": ["P2-5"]},
+      "status": "practice",
+      "basis": "과거 대납 경험",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R18",
+      "topic": "상호",
+      "when": "always",
+      "text": "한글 상호는 고객이 결정. 율촌은 중복 조회만 하고 추천하지 않음.",
+      "effects": {},
+      "status": "practice",
+      "basis": "내부 원칙",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R19",
+      "topic": "사업목적 작성",
+      "when": "always",
+      "text": "고객이 원하는 목적을 먼저 작성하고 율촌이 사후 검토. 율촌이 예시나 추천을 먼저 제시하지 않음.",
+      "effects": {},
+      "status": "practice",
+      "basis": "내부 원칙",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R20",
+      "topic": "은행",
+      "when": "always",
+      "text": "고객 요청서에는 은행명을 제시하지 않고 선호 은행 유무만 질문. 회신 후 결정.",
+      "effects": {},
+      "status": "practice",
+      "basis": "내부 원칙",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R21",
+      "topic": "공증 시점",
+      "when": "always",
+      "text": "첫 자료요청서 단계에서는 스캔본만 받고 공증하지 말라고 안내. 서명서류 완성 후 서명·공증 안내서(待签署及公证文件清单)로 공증 대상과 부수를 한 번에 지시(재공증 방지).",
+      "effects": {"client_guide_dont": ["서명서류를 받기 전에 미리 공증받지 마십시오."]},
+      "status": "practice",
+      "basis": "과거 시행착오",
+      "region": "KR 전국"
+    },
+    {
+      "id": "R22",
+      "topic": "번역",
+      "when": "always",
+      "text": "번역은 한국에서 율촌이 1회 수행(번역인 성명·주소·서명). 중국 공증처 번역과 한국 번역공증 모두 불요. 공증처가 요구하면 율촌이 중문 참고번역을 제공.",
+      "effects": {"client_guide_dont": ["번역공증을 따로 받지 마십시오. 번역은 율촌이 한국에서 합니다."]},
+      "status": "confirmed",
+      "basis": "상업등기선례 제1-22호",
+      "region": "KR 전국"
+    }
+  ],
+  "open_items": [
+    {"id": "Q-A", "text": "등기신청 대리권: 대표이사 위임장의 등기 신청 권한 조항으로 충분한지, 법인인감 날인 등기위임장이 따로 필요한지", "owner": "법무지원", "affects": "등기서류 세트"},
+    {"id": "Q-D", "text": "비상주 사무실 계약으로 외국인투자기업 사업자등록이 가능한지(최근 실무)", "owner": "법무지원", "affects": "R12"},
+    {"id": "Q-E", "text": "대표이사가 비거주 외국인일 때 사업자등록·계좌 개설에서 방한 또는 납세관리인 지정을 요구하는지", "owner": "법무지원", "affects": "R16, 일정"},
+    {"id": "Q-G", "text": "주주 위임장 원본 부수: 은행 제출 후 등기용이 남는지. 선례 A는 2부, 표준은 3부(은행 1, 등기 1, 예비 1)", "owner": "법무지원", "affects": "A1 부수"},
+    {"id": "Q-N", "text": "중국 공증처가 한/영 병기 서류를 중문 번역 없이 공증하는지(공증처마다 다를 수 있음). 대응: 율촌이 중문 참고번역 준비, 고객이 공증처에 사전 확인", "owner": "고객 통해 확인", "affects": "서명서류 언어 방식"},
+    {"id": "Q-F", "text": "자본금 1억 원 미만 외국인 출자 시 외국환거래법상 절차", "owner": "변호사", "affects": "R06"},
+    {"id": "Q-O", "text": "중국 ODI(발개위, 상무주관부문, 은행 외환등기) 소요기간", "owner": "고객 통해 확인", "affects": "P6, 송금 일정"},
+    {"id": "Q-T", "text": "법무지원팀·업무지원팀의 실제 업무범위(프로세스맵 주체 열은 가정치)", "owner": "변호사", "affects": "process.json actor"}
+  ]
+}

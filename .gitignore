@@ -1,0 +1,9 @@
+# 고객 자료는 저장소에 올리지 않는다
+cases/
+out/
+*_filled*.docx
+*.case.json
+# 생성된 문서
+/*.docx
+__pycache__/
+.DS_Store

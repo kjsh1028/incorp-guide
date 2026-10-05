@@ -1,0 +1,63 @@
+{
+  "track": "KR-JSC",
+  "version": "0.2",
+  "updated": "2026-10-05",
+  "source": "한국법인 설립 표준키트 v0.7 (용어집 등록면허세·지방교육세, R11, R17). 중국 측 실비 수치는 선례 C 자료요청서(2026-09-28)",
+  "categories": {
+    "fee": "율촌 보수(사건마다 직접 입력)",
+    "tax": "세금·공과금(자동 계산)",
+    "expense": "실비(예상 범위. 선례가 쌓이면 갱신)"
+  },
+  "items": [
+    {"id": "FEE-1", "category": "fee", "name": "율촌 보수: 착수금", "input": "manual", "currency": "manual", "when": "계약 체결 후(P0-3)"},
+    {"id": "FEE-2", "category": "fee", "name": "율촌 보수: 잔금", "input": "manual", "currency": "manual", "when": "등기 완료 후(P13-2)"},
+    {
+      "id": "TAX-1", "category": "tax", "name": "등록면허세",
+      "formula": "capital_krw * 0.004 * (head_office_zone == 'overcrowding' ? 3 : 1)",
+      "currency": "KRW",
+      "when": "등기 신청 전 납부(P10-3)",
+      "status": "confirmed",
+      "basis": "자본금의 0.4%. 과밀억제권역(산업단지 제외)은 3배 중과: 지방세법 제28조 제2항",
+      "note": "중과 제외 업종(시행령 제26조)에 해당하면 3배를 적용하지 않음. 프로그램은 업종 예외를 자동 판단하지 않고 안내문으로 표시"
+    },
+    {
+      "id": "TAX-1-MIN", "category": "tax", "name": "등록면허세 최저세액",
+      "status": "needs_check",
+      "note": "표준키트에 없는 항목. 금액과 중과 시 적용 방식은 법령 확인 후 넣는다. 확인 전에는 계산에 반영하지 않는다."
+    },
+    {
+      "id": "TAX-2", "category": "tax", "name": "지방교육세",
+      "formula": "TAX-1 * 0.2",
+      "currency": "KRW",
+      "when": "등록면허세와 함께 납부(P10-3)",
+      "status": "confirmed",
+      "basis": "등록면허세의 20%"
+    },
+    {"id": "EXP-1", "category": "expense", "name": "현지 공증료", "paid_by_default": "client", "range_text": "건당 수백 위안 수준(공증처 요금 기준)", "currency": "CNY", "status": "rough", "basis": "선례 C 자료요청서의 고객 안내 문구", "region": "CN"},
+    {"id": "EXP-2", "category": "expense", "name": "아포스티유 수수료", "paid_by_default": "client", "range_text": "부당 약 100위안(긴급 시 별도)", "currency": "CNY", "status": "rough", "basis": "선례 C 자료요청서의 고객 안내 문구", "region": "CN"},
+    {"id": "EXP-3", "category": "expense", "name": "원본 국제 특송", "paid_by_default": "client", "range_text": null, "status": "needs_data"},
+    {"id": "EXP-4", "category": "expense", "name": "법인인감 제작", "paid_by_default": "yulchon_advance", "range_text": null, "status": "needs_data"},
+    {"id": "EXP-5", "category": "expense", "name": "등기 신청 수수료·증명서 발급비", "paid_by_default": "yulchon_advance", "range_text": null, "status": "needs_data"},
+    {"id": "EXP-6", "category": "expense", "name": "임대 계약금·보증금·임대료", "paid_by_default": "client", "range_text": null, "status": "needs_data", "note": "등기 전에는 자본금을 쓸 수 없으므로 지급 방식을 미리 정함(R17). 일반 임대는 보증금·월세·관리비·중개수수료, 공유오피스 독립실은 예치금(보통 1~2개월분)과 월 이용료"},
+    {"id": "EXP-7", "category": "expense", "name": "번역 비용", "paid_by_default": "included_or_manual", "range_text": null, "status": "needs_data", "note": "율촌 번역이 보수에 포함되는지 사건별로 입력"}
+  ],
+  "examples": [
+    {"capital_krw": 100000000, "zone": "other", "registration_tax": 400000, "education_tax": 80000, "total": 480000},
+    {"capital_krw": 100000000, "zone": "overcrowding", "registration_tax": 1200000, "education_tax": 240000, "total": 1440000},
+    {"capital_krw": 1000000000, "zone": "overcrowding", "registration_tax": 12000000, "education_tax": 2400000, "total": 14400000}
+  ],
+  "tracking_fields": ["estimated", "actual", "paid_by", "billed", "received", "memo"],
+  "paid_by_values": {
+    "yulchon_advance": "율촌 대납(소액만)",
+    "client": "고객 직접 지급",
+    "client_remit": "고객 선송금분에서 지급",
+    "korean_affiliate": "한국 관계사 지급"
+  },
+  "decisions": [
+    "2026-10-05: 공증·아포스티유 소요기간(7~14일)과 중문 번역 주체(율촌이 참고번역 제공)는 표준키트 기준을 유지한다. 선례 C 자료요청서의 3~5주, 고객 번역기관 의뢰 문구는 데이터에 반영하지 않는다."
+  ],
+  "notes": [
+    "5년 내 증자와 과밀억제권역 밖에서 5년 내 전입도 중과 대상(R11). 설립 시점 계산에는 반영하지 않고 고객 안내문에 기재",
+    "status rough: 고객 안내용 대략치. 실제 지출 자료로 검증되지 않음"
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "track": "KR-JSC",
+  "version": "0.1",
+  "updated": "2026-10-05",
+  "source": "한국법인 설립 표준키트 v0.7 프로세스맵 시트",
+  "note": "actor(주체)의 지원팀 분장은 가정치. days는 [최소, 최대] 일수이며 null은 확인필요 또는 별도. applies는 inputs.json의 입력·파생 키를 쓰는 조건식이고 'always'는 공통.",
+  "actors": {
+    "lawyer": "율촌 담당변호사",
+    "legal_support": "법무지원팀",
+    "biz_support": "업무지원팀",
+    "client": "고객",
+    "external": "은행·등기소·세무서 등"
+  },
+  "phases": [
+    {"id": "P0", "name": "수임"},
+    {"id": "P1", "name": "구조 설계"},
+    {"id": "P2", "name": "자료 수집"},
+    {"id": "P3", "name": "서류 작성"},
+    {"id": "P4", "name": "해외 서명·공증·아포스티유"},
+    {"id": "P5", "name": "번역"},
+    {"id": "P6", "name": "중국 ODI(고객 측, 병행)", "side": "CN"},
+    {"id": "P7", "name": "사무실"},
+    {"id": "P8", "name": "외국인투자신고"},
+    {"id": "P9", "name": "자본금 납입"},
+    {"id": "P10", "name": "설립등기"},
+    {"id": "P11", "name": "사업자등록"},
+    {"id": "P12", "name": "설립 후속"},
+    {"id": "P13", "name": "종결"}
+  ],
+  "steps": [
+    {"id": "P0-1", "task": "이해상충 확인·매터 오픈", "actor": ["biz_support"], "prereq": [], "output": "매터 번호", "days": [1, 2], "applies": "always"},
+    {"id": "P0-2", "task": "견적·법률서비스계약서 작성", "actor": ["lawyer"], "prereq": [], "output": "계약서", "days": [1, 2], "applies": "always"},
+    {"id": "P0-3", "task": "계약 체결·착수금 청구·입금 확인", "actor": ["biz_support"], "prereq": ["P0-2"], "output": "청구서, 입금 확인", "days": [1, 7], "applies": "always"},
+
+    {"id": "P1-1", "task": "킥오프 회의(구조·일정·역할)", "actor": ["lawyer", "client"], "prereq": ["P0-3"], "output": "회의록", "days": [1, 1], "applies": "always"},
+    {"id": "P1-2", "task": "출자 주체 확정(본사 직접 / 해외 지주사 / 개인)", "actor": ["lawyer", "client"], "prereq": [], "output": "구조 확정 메모", "days": [1, 3], "applies": "always"},
+    {"id": "P1-3", "task": "중국 ODI 필요 여부·진행 상황 확인", "actor": ["lawyer", "client"], "prereq": ["P1-2"], "output": "ODI 일정표", "days": [1, 1], "applies": "needs_cn_odi", "note": "송금 일정의 핵심 변수"},
+    {"id": "P1-4", "task": "사업목적 검토(외투 제한·인허가·KSIC)", "actor": ["lawyer"], "prereq": [], "output": "검토 메모", "days": [3, 5], "applies": "always", "note": "고객이 먼저 작성하고 율촌이 사후 검토(R19)"},
+    {"id": "P1-5", "task": "자본금·액면가·임원 구성 결정", "actor": ["lawyer", "client"], "prereq": ["P1-4"], "output": "확정 정보", "days": [2, 3], "applies": "always", "note": "10억 원 기준 분기(R07, R08)"},
+    {"id": "P1-6", "task": "본점 소재지·사무실 형태 결정", "actor": ["lawyer", "client"], "prereq": [], "output": "주소 확정", "days": [3, 30], "applies": "always", "note": "등록면허세 표와 비상주 비권장 안내(R11, R12)"},
+    {"id": "P1-7", "task": "은행 선정·사전 협의", "actor": ["lawyer"], "prereq": ["P1-2"], "output": "은행 담당자 확정", "days": [2, 5], "applies": "always", "note": "고객 선호 은행 확인 후 결정(R20)"},
+
+    {"id": "P2-1", "task": "자료요청서 발송", "actor": ["lawyer"], "prereq": ["P1-1"], "output": "자료요청서", "days": [1, 1], "applies": "always", "note": "이 단계는 스캔본만. 공증 금지 안내(R21)"},
+    {"id": "P2-2", "task": "상호 중복 조회(인터넷등기소)", "actor": ["legal_support"], "prereq": [], "output": "조회 결과", "days": [1, 1], "applies": "always", "note": "한글 상호는 고객 결정(R18)"},
+    {"id": "P2-3", "task": "고객 회신 검토·정보 확정", "actor": ["lawyer"], "prereq": ["P2-1"], "output": "확정 정보표", "days": [3, 7], "applies": "always"},
+    {"id": "P2-4", "task": "대표이사 주소 증명 확보", "actor": ["lawyer", "client"], "prereq": ["P2-1"], "output": "주소 기재 신분증 또는 주소증명(공증)", "days": [1, 21], "applies": "always", "note": "늦게 알면 공증에 수주 소요(R16)"},
+    {"id": "P2-5", "task": "등기 전 비용 지급 방식 확정", "actor": ["lawyer", "client"], "prereq": ["P2-1"], "output": "지급 방식 회신", "days": [1, 7], "applies": "always", "note": "등록면허세·임대 계약금·실비(R17)"},
+
+    {"id": "P3-1", "task": "정관 작성(국문 원본 + 번역)", "actor": ["lawyer"], "prereq": ["P2-3"], "output": "정관", "days": [3, 5], "applies": "always", "note": "고객 협의 1~2회 예상"},
+    {"id": "P3-2", "task": "해외 서명서류 작성(한/영 병기)", "actor": ["lawyer"], "prereq": ["P2-3"], "output": "위임장·취임승낙서·인감신고서 등", "days": [2, 2], "applies": "always", "note": "임원 수만큼"},
+    {"id": "P3-3", "task": "모회사 발급서류 요청", "actor": ["lawyer"], "prereq": ["P1-2"], "output": "요청 목록", "days": [1, 1], "applies": "is_foreign_company_shareholder", "note": "영업집조·이사회결의·권한증명·정관"},
+    {"id": "P3-4", "task": "서명·공증 안내서 발송", "actor": ["lawyer"], "prereq": ["P3-2"], "output": "안내서", "days": [1, 1], "applies": "always", "note": "원본 부수·서명 위치·공증 여부 명시"},
+
+    {"id": "P4-1", "task": "고객 서명·날인", "actor": ["client"], "prereq": ["P3-4"], "output": "서명본", "days": [3, 7], "applies": "always", "note": "상장사는 내부 결재 기간 추가"},
+    {"id": "P4-2", "task": "현지 공증 + 아포스티유", "actor": ["client"], "prereq": ["P4-1"], "output": "공증·아포스티유본", "days": [7, 14], "applies": "officers_location == 'abroad' || is_foreign_company_shareholder || shareholder_type == 'foreign_individual'"},
+    {"id": "P4-3", "task": "원본 특송·수령·대장 기록", "actor": ["client", "legal_support"], "prereq": ["P4-2"], "output": "원본 관리 대장", "days": [3, 5], "applies": "always", "note": "유효기간 3개월 관리"},
+
+    {"id": "P5-1", "task": "외국 발급서류·공증서 한국어 번역(율촌 번역인 확인)", "actor": ["legal_support"], "prereq": ["P4-3"], "output": "번역문", "days": [2, 3], "applies": "is_foreign_company_shareholder", "note": "번역공증 불요(R22). 표준키트의 단계명은 '번역공증'이나 v0.6 이후 번역인 확인 방식으로 확정"},
+
+    {"id": "P6-1", "task": "발전개혁위원회 신고(备案)", "actor": ["client"], "prereq": [], "output": "备案通知书", "days": null, "applies": "needs_cn_odi", "side": "CN", "status": "needs_check"},
+    {"id": "P6-2", "task": "상무주관부문 신고(备案)", "actor": ["client"], "prereq": [], "output": "企业境外投资证书", "days": null, "applies": "needs_cn_odi", "side": "CN", "status": "needs_check"},
+    {"id": "P6-3", "task": "은행 외환등기", "actor": ["client"], "prereq": ["P6-1", "P6-2"], "output": "외환등기 증빙", "days": null, "applies": "needs_cn_odi", "side": "CN", "status": "needs_check", "note": "완료 전 송금 불가"},
+
+    {"id": "P7-1", "task": "임대차 계약", "actor": ["client", "lawyer"], "prereq": ["P1-6", "P2-5"], "output": "임대차계약서", "days": [3, 7], "applies": "always", "note": "설립 전에는 법인 명의 불가. 설립 중 법인 사용 특약과 명의변경을 협의. 사업자등록에는 법인 명의 계약 필요"},
+
+    {"id": "P8-1", "task": "외국인투자신고서 작성·제출(외국환은행 또는 KOTRA)", "actor": ["lawyer", "legal_support"], "prereq": ["P4-3", "P5-1"], "output": "외국인투자신고필증", "days": [1, 3], "applies": "is_fdi"},
+
+    {"id": "P9-1", "task": "주금 수납 계좌 준비", "actor": ["legal_support"], "prereq": ["P8-1"], "output": "계좌 정보", "days": [1, 2], "applies": "always"},
+    {"id": "P9-2", "task": "해외 송금(투자자 명의 일치)", "actor": ["client"], "prereq": ["P6-3", "P9-1"], "output": "송금 확인증", "days": [1, 3], "applies": "always", "note": "등기와 법인계좌 개설 전까지 자본금 사용 불가"},
+    {"id": "P9-3", "task": "주금납입보관증명서 또는 잔고증명서 발급", "actor": ["legal_support"], "prereq": ["P9-2"], "output": "증명서", "days": [1, 2], "applies": "always", "note": "10억 원 미만은 잔고증명서 가능(R08)"},
+
+    {"id": "P10-1", "task": "법인인감 제작", "actor": ["legal_support"], "prereq": ["P2-2"], "output": "법인인감", "days": [1, 1], "applies": "always"},
+    {"id": "P10-2", "task": "발기인총회·이사회 의사록, 조사보고서 등 등기서류 작성", "actor": ["lawyer"], "prereq": ["P9-3"], "output": "등기서류 세트", "days": [1, 2], "applies": "always", "note": "이사 수에 따라 이사회 의사록 또는 이사 결정서(R15)"},
+    {"id": "P10-3", "task": "등록면허세·지방교육세 납부", "actor": ["legal_support"], "prereq": ["P9-3", "P2-5"], "output": "영수증", "days": [1, 1], "applies": "always", "note": "등기 전 납부 필수"},
+    {"id": "P10-4", "task": "설립등기 신청", "actor": ["legal_support"], "prereq": ["P10-1", "P10-2", "P10-3"], "output": "접수증", "days": [1, 1], "applies": "always"},
+    {"id": "P10-5", "task": "등기 완료·등기부등본 발급", "actor": ["external", "legal_support"], "prereq": ["P10-4"], "output": "등기부등본", "days": [2, 5], "applies": "always"},
+
+    {"id": "P11-1", "task": "사업자등록 신청", "actor": ["legal_support"], "prereq": ["P10-5", "P7-1"], "output": "사업자등록증", "days": [2, 7], "applies": "always", "note": "현장 확인 가능성"},
+
+    {"id": "P12-1", "task": "외국인투자기업 등록", "actor": ["lawyer", "legal_support"], "prereq": ["P9-3", "P10-5"], "output": "외국인투자기업 등록증명서", "days": null, "deadline": "납입 완료일부터 60일 이내", "applies": "is_fdi"},
+    {"id": "P12-2", "task": "법인계좌 개설·자본금 전환", "actor": ["client", "legal_support"], "prereq": ["P11-1"], "output": "법인계좌", "days": [3, 5], "applies": "always", "note": "실제소유자 서류는 이 단계에서 요청"},
+    {"id": "P12-3", "task": "D-8 비자", "actor": ["client", "external"], "prereq": ["P12-1"], "output": "비자", "days": null, "applies": "d8_needed", "note": "독립 사무실 필요(R14)"},
+
+    {"id": "P13-1", "task": "결과물 송부·설립 완료 안내", "actor": ["lawyer"], "prereq": ["P11-1", "P12-2"], "output": "완료 보고서", "days": [1, 1], "applies": "always"},
+    {"id": "P13-2", "task": "잔금 청구·실비 정산", "actor": ["biz_support"], "prereq": ["P10-5"], "output": "청구서", "days": [1, 7], "applies": "always"},
+    {"id": "P13-3", "task": "교훈 기록·규칙 데이터 반영", "actor": ["lawyer"], "prereq": [], "output": "규칙 데이터 업데이트", "days": [1, 1], "applies": "always"}
+  ]
+}
