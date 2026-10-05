@@ -1,3 +1,4 @@
 {"attorney": {"ko": "정상훈", "zh": "郑湘勋(정상훈)"},
  "receiver": {"ko": "정상훈 변호사", "zh": "郑湘勋 律师"},
- "tel": "+82 2 528 5890", "email": "shjeong@yulchon.com"}
+ "tel": "+82 2 528 5890", "email": "shjeong@yulchon.com",
+ "sign": {"note": "서명 서류(A1~A6)의 율촌 쪽 영문 값. 비어 있으면 화면에서 사건마다 넣는다. 사용자 확인 전이라 비워 둠.", "yulchon_attorneys": "", "seal_attorney_en": "", "seal_attorney_reg_no": ""}}

@@ -42,6 +42,50 @@
       }
     },
     {
+      "id": "sign_forms",
+      "label": "서명 서류 A1~A6 (영문)",
+      "step": "P3-2",
+      "fits": "is_foreign_company_shareholder",
+      "fits_note": "A1 주주 위임장은 법인 주주용입니다. 외국 개인 주주용 틀은 아직 없습니다.",
+      "status": "pilot",
+      "basis": "표준 법인 설립 프로그램 04_서명서류의 빈 양식 [1]~[6](2026-09-26). A6(감사)은 이사 양식에서 Director를 Auditor로만 바꾼 것으로 법무지원팀 확인 전.",
+      "note": "each 가 있는 틀은 그 사람 수만큼 만든다(director: 대표이사 외 이사, auditor: 감사). keep 이 false 인 칸(국적·생년월일·주소)은 사건 기록에 저장하지 않는다. 같은 값이면 tools/docgen.py sign 과 결과가 같다.",
+      "names": "{id}_{title}_{short}{n}.docx",
+      "forms": [
+        {"id": "A1", "title": "Special Power of Attorney (Shareholder)", "template": "tools/templates/sign/a1_spoa_shareholder.docx"},
+        {"id": "A2", "title": "Acceptance of Appointment (Rep. Director)", "template": "tools/templates/sign/a2_acceptance_rep_director.docx"},
+        {"id": "A3", "title": "Report of Seal Impression (Rep. Director)", "template": "tools/templates/sign/a3_seal_report_rep_director.docx"},
+        {"id": "A4", "title": "Special Power of Attorney (Rep. Director)", "template": "tools/templates/sign/a4_spoa_rep_director.docx"},
+        {"id": "A5", "title": "Acceptance of Appointment (Director)", "each": "director", "template": "tools/templates/sign/a5_acceptance_director.docx"},
+        {"id": "A5", "title": "Special Power of Attorney (Director)", "each": "director", "template": "tools/templates/sign/a5_spoa_director.docx"},
+        {"id": "A6", "title": "Acceptance of Appointment (Auditor)", "each": "auditor", "template": "tools/templates/sign/a6_acceptance_auditor.docx", "status": "needs_check", "check": "감사용 영문 양식은 이사 양식을 바꾼 초안입니다(법무지원팀 확인 전)."},
+        {"id": "A6", "title": "Special Power of Attorney (Auditor)", "each": "auditor", "template": "tools/templates/sign/a6_spoa_auditor.docx", "status": "needs_check", "check": "감사에게도 이 위임장이 필요한지, 위임 범위가 맞는지 확인필요."}
+      ],
+      "people": {
+        "director": {"label": "이사", "when": "director_count != '1'", "count": {"2": 1, "3plus": 2}},
+        "auditor": {"label": "감사", "when": "has_auditor == true", "count": 1}
+      },
+      "fields": [
+        {"key": "company_name_en", "group": "설립할 회사", "label": "영문 상호", "keep": true, "from_reply": "name_en"},
+        {"key": "head_office_addr_en", "group": "설립할 회사", "label": "본점 주소(영문)", "keep": true},
+        {"key": "shareholder_name_en", "group": "주주(출자 법인)", "label": "영문 명칭", "keep": true},
+        {"key": "shareholder_jurisdiction_en", "group": "주주(출자 법인)", "label": "설립 준거법 국가(영문)", "keep": true, "default": {"when": "shareholder_type == 'cn_company_direct'", "value": "the People's Republic of China"}},
+        {"key": "shareholder_addr_en", "group": "주주(출자 법인)", "label": "본사 주소(영문)", "keep": true},
+        {"key": "shareholder_signatory_name_en", "group": "주주(출자 법인)", "label": "서명자 영문 성명", "keep": true, "hint": "보통 법정대표인"},
+        {"key": "shareholder_signatory_title_en", "group": "주주(출자 법인)", "label": "서명자 직함(영문)", "keep": true, "hint": "예: Legal Representative"},
+        {"key": "name_en", "person": true, "label": "여권 영문 성명", "keep": true, "from_reply": "name_en"},
+        {"key": "nationality_en", "person": true, "label": "국적(영문)", "keep": false, "from_reply": "nationality_dob"},
+        {"key": "dob_en", "person": true, "label": "생년월일(영문)", "keep": false, "from_reply": "nationality_dob", "hint": "예: January 1, 1980"},
+        {"key": "addr_en", "person": true, "label": "주소(영문, 신분증과 같게)", "keep": false, "from_reply": "address"},
+        {"key": "sign_month_en", "group": "서명일", "label": "서명 월(영문)", "keep": true, "hint": "예: October. 날짜(일)는 서명할 때 손으로 적도록 비워 둡니다"},
+        {"key": "sign_year", "group": "서명일", "label": "서명 연도", "keep": true},
+        {"key": "yulchon_attorneys", "group": "율촌", "label": "수임 변호사 영문 성명(A1·A4·A5·A6)", "keep": true, "firm": true},
+        {"key": "seal_attorney_en", "group": "율촌", "label": "인감신고 대리인 영문 성명(A3)", "keep": true, "firm": true},
+        {"key": "seal_attorney_reg_no", "group": "율촌", "label": "인감신고 대리인 등록번호(A3)", "keep": true, "firm": true}
+      ],
+      "roles": {"rep_director": "대표이사", "director": "이사", "auditor": "감사"}
+    },
+    {
       "id": "progress",
       "label": "진행 보고",
       "every_days": 7,

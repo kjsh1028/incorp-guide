@@ -14,4 +14,10 @@
   "schedule": [{"when": {"ko": "10월 3주", "zh": "10月第3周"}, "status": "doing"}, {"when": {"ko": "10월 4주", "zh": "10月第4周"}, "status": "todo"},
                {"when": {"ko": "11월", "zh": "11月"}, "status": "todo"}, {"when": {"ko": "진행 중", "zh": "办理中"}, "status": "doing"},
                {"when": {"ko": "ODI 완료 후", "zh": "ODI完成后"}, "status": "todo"}, {"when": {"ko": "송금 후 1~2주", "zh": "汇款后1～2周"}, "status": "todo"},
-               {"when": {"ko": "등기 후 2~3주", "zh": "登记后2～3周"}, "status": "todo"}]}}
+               {"when": {"ko": "등기 후 2~3주", "zh": "登记后2～3周"}, "status": "todo"}]},
+ "sign": {"values": {"company_name_en": "Sample Tech Korea Co., Ltd.", "head_office_addr_en": "1 Sample-ro, Jung-gu, Seoul, Korea",
+   "shareholder_name_en": "Sample Technology Co., Ltd.", "shareholder_jurisdiction_en": "the People's Republic of China",
+   "shareholder_addr_en": "1 Test Road, Pudong, Shanghai, China", "shareholder_signatory_name_en": "ZHANG San",
+   "shareholder_signatory_title_en": "Legal Representative", "sign_month_en": "October", "sign_year": "2026"},
+  "people": {"rep_director": {"name_en": "LI Si", "nationality_en": "People's Republic of China", "dob_en": "January 1, 1980", "addr_en": "1 Test Road, Shanghai, China"},
+   "director": [], "auditor": []}}}

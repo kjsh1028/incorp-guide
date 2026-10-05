@@ -9,7 +9,7 @@ let bad=0; const ok=(name,c)=>{console.log((c?'같음  ':'다름! ')+name); if(!
 (async () => {
   const html=fs.readFileSync(R+'index.html','utf8'), cut=(a,b)=>html.slice(html.indexOf(a),html.indexOf(b));
   const src=cut('/* ---------- 고객 문서 만들기 ----------','function loadScript(')+cut('/* ---------- 고객 회신 읽기 ----------','/* 사건 기록에는')
-    +'\nwindow.T_BUILD=buildXml;window.T_READ=function(x,so){return readReply(readTables(x),so)};';
+    +'\nwindow.T_BUILD=buildXml;window.T_SPLAN=signPlan;window.T_SFILL=signFill;window.T_READ=function(x,so){return readReply(readTables(x),so)};';
   const br=await chromium.launch(), p=await br.newPage(); await p.setContent('<html><body></body></html>');
   await p.addScriptTag({path:R+'lib/jszip.min.js'}); await p.addScriptTag({content:src});
   const xmlOf=f=>p.evaluate(async b=>{const z=await JSZip.loadAsync(Uint8Array.from(atob(b),c=>c.charCodeAt(0)));return z.file('word/document.xml').async('string')},fs.readFileSync(f).toString('base64'));
@@ -29,6 +29,22 @@ let bad=0; const ok=(name,c)=>{console.log((c?'같음  ':'다름! ')+name); if(!
         const js=await p.evaluate(([x,k,d,firm,l])=>window.T_BUILD(k,x,d,firm,l).xml,[tpl,kind,d,firm,lang]);
         ok(`문서 ${tag} ${kind} ${lang}`, js===await xmlOf(f));
       }
+    }
+  }
+  // 1-2) 서명 서류 A1~A6: 샘플(대표이사만, 율촌 값 비움)과 이사 2명·감사가 있고 율촌 값이 있는 사건
+  const od=JSON.parse(fs.readFileSync(R+'data/tracks/KR-JSC/outputs.json','utf8')).documents.find(d=>d.id==='sign_forms');
+  const s2=JSON.parse(JSON.stringify(c1)); const pp=n=>({name_en:'TEST '+n,nationality_en:'People\'s Republic of China',dob_en:'May 5, 1985',addr_en:n+' Test Road'});
+  s2.sign.people.director=[pp('D1'),pp('D2')]; s2.sign.people.auditor=[pp('AU')]; s2.sign.values.head_office_addr_en='';
+  s2.firm={...firm,sign:{yulchon_attorneys:'Test Attorney A and Test Attorney B',seal_attorney_en:'Test Attorney A',seal_attorney_reg_no:'00000'}};
+  for (const [tag,c] of [['샘플',c1],['이사·감사',s2]]) {
+    const cf=W+'/s_'+tag+'.json', out=W+'/sout_'+tag; fs.writeFileSync(cf,JSON.stringify(c));
+    const made=py('tools/docgen.py','sign',cf,out).trim().split('\n').map(l=>l.split(' | ')[0].trim());
+    const plan=await p.evaluate(([od,sd,f,sh])=>window.T_SPLAN(od,sd,f,sh),[od,c.sign,c.firm||firm,c.client_short]);
+    ok(`서명 서류 ${tag} 개수 ${made.length}`, plan.length===made.length);
+    for (let i=0;i<made.length;i++) {
+      const tpl=await xmlOf(R+plan[i].form.template);
+      const js=await p.evaluate(([x,v])=>window.T_SFILL(x,v).xml,[tpl,plan[i].vals]);
+      ok(`서명 서류 ${tag} ${path.basename(made[i])}`, js===await xmlOf(made[i]) && path.basename(made[i])===plan[i].name.replace(/[\\/:*?"<>|]/g,'_'));
     }
   }
   // 2) 회신 읽기: 가상 회신(국문 채움)과 빈 회신

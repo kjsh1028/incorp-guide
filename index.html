@@ -202,6 +202,19 @@ tfoot td{font-weight:700;border-bottom:0}
         <div id="i-saved"></div>
       </section>
     </details>
+    <details id="a-box" style="margin-top:8px"><summary style="cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center">🖋 서명 서류(A1~A6, 영문) 만들기</summary>
+      <section style="margin-top:6px">
+        <div id="a-fit"></div>
+        <p class="hint">위임장·취임승낙서·인감신고서를 영문 양식에 채워 만듭니다. 이사·감사 서류는 해당할 때만 만듭니다. 회신에서 읽은 값은 미리 들어가 있으니 영문으로 맞는지만 확인해 주세요.</p>
+        <p class="hint">🔒 국적·생년월일·주소는 사건 기록에 저장하지 않습니다(화면을 새로 열면 지워짐). 그럴 때는 아래에서 회신 파일을 다시 고르면 다시 채워집니다.</p>
+        <label class="small" for="a-file" style="display:block;margin-top:8px">회신 파일로 채우기</label>
+        <input type="file" id="a-file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="margin-top:4px;max-width:100%">
+        <div id="a-msg"></div>
+        <div id="a-form"></div>
+        <button class="act" id="a-make" type="button">서명 서류 만들기</button>
+        <div id="a-out"></div>
+      </section>
+    </details>
     <details id="s-box" style="margin-top:8px"><summary style="cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center">✍️ 서명·공증 안내서 만들기</summary>
       <section style="margin-top:6px">
         <div id="s-fit"></div>
@@ -659,7 +672,7 @@ function useTrack(id,vals){
 function enterGuide(){if(CUR===null&&V===GUIDE.V)return;CUR=null;useTrack(GUIDE.track,GUIDE.V);GUIDE.V=V;FEE=GUIDE.fees}
 function enterCase(cs,force){
  if(!force&&CUR===cs.id&&V===cs.inputs)return;
- if(CUR!==cs.id){var st0=cs.steps||{};$("r-box").open=!st0["P2-1"];$("g-box").open=false;$("s-box").open=!!st0["P3-2"]&&!st0["P3-4"];GEN={id:cs.id,files:{}}}
+ if(CUR!==cs.id){var st0=cs.steps||{};$("r-box").open=!st0["P2-1"];$("g-box").open=false;$("s-box").open=!!st0["P3-2"]&&!st0["P3-4"];$("a-box").open=!!st0["P2-3"]&&!st0["P3-2"];GEN={id:cs.id,files:{}}}
  CUR=cs.id;useTrack(cs.track,cs.inputs);cs.inputs=V;cs.fees=cs.fees||{};FEE=cs.fees;
 }
 function selectTrack(id){
@@ -734,6 +747,7 @@ function renderCaseDash(c,p){
  var os=outDoc("signing");
  $("s-fit").innerHTML=!os?'<p class="warn">이 설립 유형에는 서명·공증 안내서 틀이 아직 없습니다.</p>':(c&&os.fits&&!when(os.fits,c)?'<p class="warn">'+esc(os.fits_note)+tagChk()+'</p>':'');
  ["request","signing","progress"].forEach(function(k){var o=outDoc(k);if(o)renderGen(cs,o);else $(DOCBOX[k]+"-out").innerHTML=""});
+ renderSign(cs,c);
  renderProgress(cs,c,p);
  if(!READ||READ.id!==cs.id)$("i-out").innerHTML="";
  renderReplySaved(cs);
@@ -850,6 +864,28 @@ function buildXml(kind,x,d,firm,lang){
  var left=[],seen={};(x.replace(/<[^>]+>/g,"").match(/\{\{\w+\}\}/g)||[]).forEach(function(t){if(!seen[t]){seen[t]=1;left.push(t.slice(2,-2))}});
  return {xml:x,left:left.sort()};
 }
+/* 서명 서류 A1~A6: tools/docgen.py 의 sign_plan 과 같다. sd = {values:{...}, people:{rep_director:{...}, director:[{...}], auditor:[{...}]}}
+   each 가 있는 틀은 그 사람 수만큼 만들고, 율촌 쪽 값이 비어 있으면 firm_profile.json 의 sign 값을 쓴다. */
+function signPlan(od,sd,firm,short){
+ var s=sd||{},ppl=s.people||{},fs=(firm&&firm.sign)||{},base={},out=[];
+ Object.keys(s.values||{}).forEach(function(k){var v=s.values[k];if(v!=null&&v!=="")base[k]=v});
+ ["yulchon_attorneys","seal_attorney_en","seal_attorney_reg_no"].forEach(function(k){if(!base[k]&&fs[k])base[k]=fs[k]});
+ var rp=ppl.rep_director||{};Object.keys(rp).forEach(function(k){if(rp[k]!=null&&rp[k]!=="")base["rep_director_"+k]=rp[k]});
+ od.forms.forEach(function(f){
+  var group=!f.each?[null]:(ppl[f.each]||[]);
+  group.forEach(function(pp,i){
+   var v={};Object.keys(base).forEach(function(k){v[k]=base[k]});
+   Object.keys(pp||{}).forEach(function(k){if(pp[k]!=null&&pp[k]!=="")v[f.each+"_"+k]=pp[k]});
+   out.push({form:f,vals:v,name:od.names.replace("{id}",f.id).replace("{title}",f.title).replace("{short}",short||"").replace("{n}",group.length>1?" "+(i+1):"")});
+  });
+ });
+ return out;
+}
+function signFill(x,vals){
+ x=fillXml(x,vals);
+ var left=[],seen={};(x.replace(/<[^>]+>/g,"").match(/\{\{\w+\}\}/g)||[]).forEach(function(t){if(!seen[t]){seen[t]=1;left.push(t.slice(2,-2))}});
+ return {xml:x,left:left.sort()};
+}
 function loadScript(src){return new Promise(function(res,rej){if(window.JSZip)return res();var el=document.createElement("script");el.src=src;el.onload=res;el.onerror=function(){rej(Error(src+" 를 읽지 못했습니다."))};document.head.appendChild(el)})}
 function getBin(u){return fetch(u,{cache:"no-cache"}).then(function(r){if(!r.ok)throw Error(u+" ("+r.status+")");return r.arrayBuffer()})}
 function safeName(n){return String(n).replace(/[\\/:*?"<>|]/g,"_")}
@@ -893,6 +929,132 @@ function renderGen(cs,od){
   +(canShare?'<button class="act" type="button" data-share="'+od.id+'">📤 메일·위챗 등으로 보내기</button>':'<p class="hint">이 기기에서는 바로 보내기가 안 됩니다. 내려받은 파일을 메일에 첨부해 주세요.</p>')
   +(left.length?'<p class="warn">채우지 못한 빈칸(문서에 노란색으로 남음): '+esc(left.join(", "))+'</p>':'<p class="note">빈칸을 모두 채웠습니다. 보내기 전에 한 번 열어 확인해 주세요.</p>')
   +'<p class="hint">만든 파일은 드라이브 사건 폴더('+(od.id==="progress"?"07_진행보고":od.id==="signing"?"03_서명서류":"01_자료요청·회신")+')에 넣어 두세요.</p>'+mark+'</div>';
+}
+
+/* ---------- 서명 서류 A1~A6 (영문) ----------
+   칸 목록은 outputs.json 의 sign_forms.fields. keep 이 true 인 값은 cs.sign 에 저장하고,
+   keep 이 false 인 값(국적·생년월일·주소)은 SIGNTMP(이 화면의 메모리)에만 둔다.
+   사람 칸은 역할(rep_director, director, auditor)과 순번으로 나눈다. 회신의 임원 칸은 역할마다 1명뿐이라 첫 사람만 채운다. */
+var SIGNTMP={}, FIRM=null;
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function sBox(cs,role,i,keep){
+ var root=keep?(cs.sign=cs.sign||{},cs.sign.people=cs.sign.people||{}):(SIGNTMP[cs.id]=SIGNTMP[cs.id]||{});
+ root[role]=root[role]||[];root[role][i]=root[role][i]||{};return root[role][i];
+}
+function sPeek(cs,role,i,keep){var root=keep?((cs.sign||{}).people||{}):(SIGNTMP[cs.id]||{});return (root[role]||[])[i]||{}}
+function sGet(cs,c,role,i,f){
+ var v, ans=cs.reply&&cs.reply.answers;
+ if(!role){
+  v=((cs.sign||{}).values||{})[f.key];if(v!==undefined)return v;
+  if(f.from_reply&&ans)v=ans[f.from_reply];
+  if(!v&&f.default&&c&&when(f.default.when,c))v=f.default.value;
+  if(!v&&f.key==="sign_month_en")v=MONTHS[new Date().getMonth()];
+  if(!v&&f.key==="sign_year")v=String(new Date().getFullYear());
+  return v||"";
+ }
+ v=sPeek(cs,role,i,f.keep)[f.key];if(v!==undefined)return v;
+ if(f.keep&&f.from_reply&&i===0&&ans&&ans.officers&&ans.officers[role])v=ans.officers[role][f.from_reply];
+ return v||"";
+}
+function signCount(cs,od,c,role){
+ if(role==="rep_director")return 1;
+ var pd=(od.people||{})[role];if(!pd||!c||!when(pd.when,c))return 0;
+ var n=((cs.sign||{}).n||{})[role];if(n)return n;
+ return typeof pd.count==="number"?pd.count:(pd.count[c.director_count]||1);
+}
+/* 회신의 "국적 / 생년월일" 한 칸을 영문 국적과 생년월일로 나눈다. 못 나누면 그대로 둔다(화면에서 고침). */
+function natDob(s){
+ var r={};if(!s)return r;
+ var m=String(s).match(/(\d{4})\s*[-.\/年년]\s*(\d{1,2})\s*[-.\/月월]\s*(\d{1,2})\s*[日일]?/);
+ if(m&&+m[2]>=1&&+m[2]<=12){r.dob_en=MONTHS[+m[2]-1]+" "+(+m[3])+", "+m[1];s=String(s).replace(m[0]," ")}
+ var n=String(s).replace(/[\/／,，、]+/g," ").replace(/\s+/g," ").trim();
+ if(/^(중국|中国|中國|中华人民共和国|china|prc|people'?s republic of china)$/i.test(n))n="People's Republic of China";
+ if(n)r.nationality_en=n;
+ return r;
+}
+/* 회신(읽은 결과 answers)에서 서명 서류 칸을 채운다. 저장하지 않는 값은 SIGNTMP 에만 넣는다. */
+function signTake(cs,a){
+ var off=(a&&a.officers)||{}, n=0;
+ ["rep_director","director","auditor"].forEach(function(role){
+  var o=off[role];if(!o)return;
+  var t=sBox(cs,role,0,false), nd=natDob(o.nationality_dob);
+  if(nd.nationality_en){t.nationality_en=nd.nationality_en;n++}
+  if(nd.dob_en){t.dob_en=nd.dob_en;n++}
+  if(o.address){t.addr_en=o.address;n++}
+  var k=sPeek(cs,role,0,true);if(o.name_en&&!k.name_en){sBox(cs,role,0,true).name_en=o.name_en;n++}
+ });
+ if(a&&a.name_en&&!((cs.sign||{}).values||{}).company_name_en){cs.sign=cs.sign||{};cs.sign.values=cs.sign.values||{};cs.sign.values.company_name_en=a.name_en;n++}
+ return n;
+}
+function signData(cs,od,c){
+ var vals={},people={};
+ od.fields.forEach(function(f){if(!f.person)vals[f.key]=sGet(cs,c,null,0,f)});
+ ["rep_director","director","auditor"].forEach(function(role){
+  var list=[];for(var i=0;i<signCount(cs,od,c,role);i++){var p={};od.fields.forEach(function(f){if(f.person)p[f.key]=sGet(cs,c,role,i,f)});list.push(p)}
+  people[role]=role==="rep_director"?list[0]:list;
+ });
+ return {values:vals,people:people};
+}
+function nonLatin(v){return /[^\x00-\x7F’‘“”–—]/.test(v||"")}
+function sInput(cs,c,role,i,f){
+ var v=sGet(cs,c,role,i,f), id="sg-"+(role||"c")+"-"+i+"-"+f.key;
+ var ph=f.firm&&FIRM&&FIRM.sign&&FIRM.sign[f.key]?"기본값 사용: "+FIRM.sign[f.key]:(f.firm?"비어 있으면 문서에 빈칸으로 남습니다":"");
+ return '<div class="q"><label for="'+id+'">'+esc(f.label)+(f.keep?'':' 🔒')+'</label><input id="'+id+'" type="text" style="max-width:none" data-sg="'+(role||"")+'|'+i+'|'+f.key+'|'+(f.keep?1:0)+'" value="'+esc(v)+'" placeholder="'+esc(ph)+'">'
+  +(f.hint?'<p class="hint">'+esc(f.hint)+'</p>':'')+(nonLatin(v)?'<p class="warn" style="margin-top:4px">영문이 아닌 글자가 있습니다. 영문으로 바꿔 주세요.</p>':'')+'</div>';
+}
+function renderSignForm(cs,c,force){
+ var od=outDoc("sign_forms"), el=$("a-form");
+ if(!od){$("a-fit").innerHTML='<p class="warn">이 설립 유형에는 서명 서류 틀이 아직 없습니다.</p>';el.innerHTML="";return}
+ $("a-fit").innerHTML=c&&od.fits&&!when(od.fits,c)?'<p class="warn">'+esc(od.fits_note)+tagChk()+'</p>':'';
+ if(!force&&el.contains(document.activeElement))return;
+ var groups=[],by={};
+ od.fields.forEach(function(f){if(f.person)return;if(!by[f.group]){by[f.group]=[];groups.push(f.group)}by[f.group].push(f)});
+ var h="",pf=od.fields.filter(function(f){return f.person}), roles=od.roles||{};
+ groups.slice(0,2).forEach(function(g){h+='<h3 style="margin-top:14px">'+esc(g)+'</h3>'+by[g].map(function(f){return sInput(cs,c,null,0,f)}).join("")});
+ ["rep_director","director","auditor"].forEach(function(role){
+  var n=signCount(cs,od,c,role);
+  for(var i=0;i<n;i++)h+='<h3 style="margin-top:14px">'+esc(roles[role]||role)+(n>1?' '+(i+1):'')+'</h3>'+pf.map(function(f){return sInput(cs,c,role,i,f)}).join("");
+  if(role==="director"&&n)h+='<div class="row"><button class="act ghost" type="button" data-sgn="1" style="margin:0">＋ 이사 추가</button>'+(n>1?'<button class="act ghost" type="button" data-sgn="-1" style="margin:0">－ 마지막 이사 빼기</button>':'')+'</div>';
+ });
+ groups.slice(2).forEach(function(g){h+='<h3 style="margin-top:14px">'+esc(g)+'</h3>'+by[g].map(function(f){return sInput(cs,c,null,0,f)}).join("")});
+ el.innerHTML=h;
+}
+function makeSignDocs(od,sd,short){
+ if(!/^https?:$/.test(location.protocol))return Promise.reject(Error("문서 만들기는 웹 주소(GitHub Pages)로 열었을 때만 됩니다. 파일로 열면 브라우저가 틀 파일을 읽지 못하게 막습니다."));
+ return Promise.all([loadScript("lib/jszip.min.js"),getJSON("tools/firm_profile.json")]).then(function(r){
+  FIRM=r[1];
+  return Promise.all(signPlan(od,sd,FIRM,short).map(function(it){
+   return getBin(it.form.template).then(function(buf){return JSZip.loadAsync(buf)}).then(function(z){
+    return z.file("word/document.xml").async("string").then(function(x){
+     var b=signFill(x,it.vals);z.file("word/document.xml",b.xml,{createFolders:false});
+     return z.generateAsync({type:"blob",compression:"DEFLATE",mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}).then(function(blob){
+      return {id:it.form.id,check:it.form.status==="needs_check"?it.form.check:"",blob:blob,name:safeName(it.name),left:b.left};
+     });
+    });
+   });
+  }));
+ });
+}
+function renderSignOut(cs,od){
+ var fs=(GEN.id===cs.id&&GEN.files.sign_forms)||[], el=$("a-out"), canShare=false;
+ if(!fs.length){el.innerHTML="";return}
+ try{canShare=!!(navigator.canShare&&navigator.canShare({files:fs.map(function(f){return new File([f.blob],f.name,{type:f.blob.type})})}))}catch(e){}
+ var left=[],chk=[];fs.forEach(function(f){f.left.forEach(function(k){if(left.indexOf(k)<0)left.push(k)});if(f.check&&chk.indexOf(f.check)<0)chk.push(f.check)});
+ var lab={};od.fields.forEach(function(f){lab[f.key]=f.label});
+ var leftTxt=left.map(function(k){var m=k.match(/^(rep_director|director|auditor)_(.+)$/);return m?(od.roles[m[1]]+" "+(lab[m[2]]||m[2])):(lab[k]||k)});
+ var done=(cs.steps||{})[od.step];
+ el.innerHTML='<div class="files">'+fs.map(function(f,i){return '<div class="row"><button class="act ghost" type="button" data-dl="sign_forms:'+i+'" style="margin:0">⬇ '+esc(f.id)+'</button><span class="small">'+esc(f.name)+'</span></div>'}).join("")
+  +'<button class="act" type="button" data-zip="sign_forms">🗂 한 번에 내려받기(zip)</button>'
+  +(canShare?'<button class="act" type="button" data-share="sign_forms">📤 메일·위챗 등으로 보내기</button>':'')
+  +(left.length?'<p class="warn">채우지 못한 칸(문서에 {{…}} 로 남음): '+esc(leftTxt.join(", "))+'</p>':'<p class="note">빈칸을 모두 채웠습니다. 보내기 전에 한 번 열어 확인해 주세요.</p>')
+  +(chk.length?'<p class="warn">'+chk.map(esc).join("<br>")+tagChk()+'</p>':'')
+  +'<p class="hint">서명 날짜(일)는 고객이 서명할 때 적도록 비워 둡니다. 만든 파일은 드라이브 사건 폴더(03_서명서류)에 넣어 두세요.</p>'
+  +'<button class="act ghost" type="button" data-step="'+esc(od.step)+'" data-case="'+esc(cs.id)+'">'+(done?'✓ 작성 끝으로 표시됨 ('+esc(done)+')':'서명 서류 작성이 끝났으면 눌러 주세요 ('+esc(od.step)+' 완료)')+'</button></div>';
+}
+function renderSign(cs,c){
+ renderSignForm(cs,c,false);
+ var od=outDoc("sign_forms");if(od)renderSignOut(cs,od);else $("a-out").innerHTML="";
+ if(!FIRM&&/^https?:$/.test(location.protocol))getJSON("tools/firm_profile.json").then(function(f){FIRM=f;var x=curCase();if(x&&x.id===cs.id)renderSignForm(x,c,false)},function(){});
 }
 
 /* ---------- 진행 보고 ----------
@@ -1292,13 +1454,26 @@ document.addEventListener("click",function(e){
   out.innerHTML='<p class="note">만드는 중입니다…</p>';b.disabled=true;
   makeDocs(od,dd,{short:shortOf(cs),no:dd.report?dd.report.no:null}).then(function(fs){if(GEN.id!==cs.id)GEN={id:cs.id,files:{}};GEN.files[od.id]=fs;renderGen(cs,od)},function(err){out.innerHTML='<p class="warn">'+esc(err.message||err)+'</p>'}).then(function(){b.disabled=false});
  }
+ else if(b.id==="a-make"&&cs){
+  var oa=outDoc("sign_forms");if(!oa)return;
+  var ca=ctx();$("a-out").innerHTML='<p class="note">만드는 중입니다…</p>';b.disabled=true;
+  makeSignDocs(oa,signData(cs,oa,ca),shortOf(cs)).then(function(fs){if(GEN.id!==cs.id)GEN={id:cs.id,files:{}};GEN.files.sign_forms=fs;renderSignOut(cs,oa)},function(err){$("a-out").innerHTML='<p class="warn">'+esc(err.message||err)+'</p>'}).then(function(){b.disabled=false});
+ }
+ else if(b.dataset.sgn&&cs){
+  var on=outDoc("sign_forms"),cn=ctx();cs.sign=cs.sign||{};cs.sign.n=cs.sign.n||{};
+  cs.sign.n.director=Math.min(6,Math.max(1,signCount(cs,on,cn,"director")+(+b.dataset.sgn)));touch(cs);renderSignForm(cs,cn,true);
+ }
+ else if(b.dataset.zip&&GEN.files[b.dataset.zip]&&cs){
+  var zz=new JSZip();GEN.files[b.dataset.zip].forEach(function(f){zz.file(f.name,f.blob)});
+  zz.generateAsync({type:"blob",compression:"DEFLATE"}).then(function(blob){saveBlob({blob:blob,name:safeName("서명서류_A1-A6_"+shortOf(cs)+"_"+today().replace(/-/g,"")+".zip")})});
+ }
  else if(b.id==="g-reset"&&cs){var c1=ctx();cs.pdraft=pAuto(cs,c1,plan(c1),outDoc("progress"));touch(cs);renderProgress(cs,c1,plan(c1))}
  else if(b.dataset.repsent&&cs){
   var pd0=cs.pdraft||{};cs.reports=cs.reports||[];cs.reports.push({no:(cs.reports.length+1),date:today(),reply_by:pd0.reply_by||null});
   cs.pdraft=null;if(GEN.id===cs.id)GEN.files.progress=null;touch(cs);safe(render);
  }
  else if(b.id==="i-apply"&&cs&&READ&&READ.id===cs.id){
-  var res=importCase(READ.result,false);
+  var res=importCase(READ.result,false);signTake(cs,READ.result.answers);
   cs.reply={read:today(),file:READ.file,answers:replyForRecord(READ.result.answers)};
   READ=null;$("i-file").value="";changed();safe(render);
   $("i-out").innerHTML='<p class="note">'+res.n+'개 항목을 반영했습니다. 화면의 기본 정보를 한 번 더 확인해 주세요.</p>';
@@ -1346,6 +1521,14 @@ document.addEventListener("click",function(e){
  }
 });
 document.addEventListener("change",function(e){
+ if(e.target.id==="a-file"&&D){
+  var ca=curCase(), fa=e.target.files&&e.target.files[0];if(!ca||!fa)return;
+  $("a-msg").innerHTML='<p class="note">읽는 중입니다…</p>';
+  readReplyFile(fa,ca).then(function(r){var n=signTake(ca,r.answers);touch(ca);e.target.value="";renderSignForm(ca,ctx(),true);
+   $("a-msg").innerHTML='<p class="note">회신에서 '+n+'개 칸을 채웠습니다. 🔒 표시 칸은 저장하지 않습니다.</p>'},
+   function(err){$("a-msg").innerHTML='<p class="warn">읽지 못했습니다: '+esc(err.message||err)+'</p>'});
+  return;
+ }
  if(e.target.id!=="i-file"||!D)return;
  var cs=curCase(), f=e.target.files&&e.target.files[0];if(!cs||!f)return;
  $("i-out").innerHTML='<p class="note">읽는 중입니다…</p>';
@@ -1361,6 +1544,13 @@ document.addEventListener("input",function(e){
   if(path[0]==="when"){cs.pdraft.when=cs.pdraft.when||{};cs.pdraft.when[path[1]]=cs.pdraft.when[path[1]]||{};cs.pdraft.when[path[1]][path[2]]=el.value}
   else cs.pdraft[path[0]]=el.value;
   cs.pdraft.edited=true;touch(cs);return;
+ }
+ if(el.dataset.sg&&cs){
+  var q=el.dataset.sg.split("|"),keep=q[3]==="1";
+  if(!q[0]){cs.sign=cs.sign||{};cs.sign.values=cs.sign.values||{};cs.sign.values[q[2]]=el.value}
+  else sBox(cs,q[0],+q[1],keep)[q[2]]=el.value;
+  var nx=el.parentNode.querySelector(".warn");if(nonLatin(el.value)!==!!nx){if(nx)nx.remove();else{var w=document.createElement("p");w.className="warn";w.style.marginTop="4px";w.textContent="영문이 아닌 글자가 있습니다. 영문으로 바꿔 주세요.";el.parentNode.appendChild(w)}}
+  if(keep)touch(cs);return;
  }
  if(el.dataset.cf&&cs){cs[el.dataset.cf]=el.value;touch(cs);safe(function(){renderCaseDash(T?ctx():null,T?plan(ctx()):null)});return}
  if(el.dataset.in&&el.tagName==="INPUT"){V[el.dataset.in]=el.value;changed();safe(function(){paintInputs();renderOut()})}

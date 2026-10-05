@@ -4,6 +4,7 @@
   python tools/docgen.py request_cnwfoe case.json outdir   한국 법인의 중국 독자법인 설립 자료요청서(초안 틀, 국문만)
   python tools/docgen.py signing  case.json outdir   서명 및 공증 서류 안내
   python tools/docgen.py progress case.json outdir   진행 보고
+  python tools/docgen.py sign     case.json outdir   서명 서류 A1~A6(영문). 틀 목록은 data/tracks/<트랙>/outputs.json 의 sign_forms
   python tools/docgen.py read     case.json 회신본.docx   자료요청서 회신 판독 -> JSON 출력
 채우지 못한 빈칸은 노란색으로 남고 목록으로 알려 준다."""
 import sys, json, re, zipfile, io, os, datetime
@@ -120,6 +121,39 @@ def make(kind, case, outdir):
         p = os.path.join(outdir, name); open(p, "wb").write(data); res.append((p, left))
     return res
 
+# ---------------- 서명 서류 A1~A6 ----------------
+def sign_plan(od, case):
+    """case["sign"] = {"values": {...}, "people": {"rep_director": {...}, "director": [{...}], "auditor": [{...}]}}
+    틀마다 채울 값과 파일 이름을 정한다. each 가 있는 틀은 그 사람 수만큼(없으면 만들지 않음). 화면의 signPlan 과 같다."""
+    s = case.get("sign", {}); ppl = s.get("people", {}); fs = case.get("firm", {}).get("sign", {})
+    base = {k: v for k, v in s.get("values", {}).items() if v not in (None, "")}
+    for k in ("yulchon_attorneys", "seal_attorney_en", "seal_attorney_reg_no"):
+        if not base.get(k) and fs.get(k): base[k] = fs[k]
+    for k, v in (ppl.get("rep_director") or {}).items():
+        if v not in (None, ""): base["rep_director_" + k] = v
+    out = []
+    for f in od["forms"]:
+        group = [None] if not f.get("each") else (ppl.get(f["each"]) or [])
+        for i, pp in enumerate(group, 1):
+            v = dict(base)
+            for k, x in (pp or {}).items():
+                if x not in (None, ""): v[f["each"] + "_" + k] = x
+            n = " %d" % i if len(group) > 1 else ""
+            out.append((f, v, od["names"].format(id=f["id"], title=f["title"], short=case.get("client_short", ""), n=n)))
+    return out
+
+def make_sign(case, outdir):
+    od = [d for d in json.load(open(os.path.join(HERE, "..", "data", "tracks", case.get("track", "KR-JSC"), "outputs.json"), encoding="utf-8"))["documents"] if d["id"] == "sign_forms"][0]
+    os.makedirs(outdir, exist_ok=True); res = []
+    for f, v, name in sign_plan(od, case):
+        src = zipfile.ZipFile(os.path.join(HERE, "..", f["template"]))
+        x = fill(src.read("word/document.xml").decode("utf-8"), v)
+        left = sorted(set(re.findall(r"\{\{(\w+)\}\}", re.sub(r"<[^>]+>", "", x))))
+        p = os.path.join(outdir, re.sub(r'[\\/:*?"<>|]', "_", name)); dst = zipfile.ZipFile(p, "w", zipfile.ZIP_DEFLATED)
+        for it in src.infolist(): dst.writestr(it, x.encode("utf-8") if it.filename == "word/document.xml" else src.read(it.filename))
+        dst.close(); res.append((p, left))
+    return res
+
 # ---------------- 자료요청서 회신 판독 ----------------
 UNCHK = "□☐"; CHK = "☑☒■√✓✔●▣◼"
 def ctext(c): return "\n".join(p.text for p in c.paragraphs).strip()
@@ -212,4 +246,4 @@ if __name__ == "__main__":
     if "firm" not in case and os.path.exists(fp): case["firm"] = json.load(open(fp, encoding="utf-8"))
     if kind == "read": print(json.dumps(read(case, sys.argv[3]), ensure_ascii=False, indent=1))
     else:
-        for p, left in make(kind, case, sys.argv[3]): print(p, ("| 남은 빈칸: " + ", ".join(left)) if left else "")
+        for p, left in make_sign(case, sys.argv[3]) if kind == "sign" else make(kind, case, sys.argv[3]): print(p, ("| 남은 빈칸: " + ", ".join(left)) if left else "")
