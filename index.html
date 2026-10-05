@@ -55,7 +55,7 @@ section{background:var(--sheet);border:1px solid var(--line);border-radius:14px;
 .opts button[aria-pressed="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
 .opts button:disabled{color:var(--ink2);background:var(--mute-bg);cursor:not-allowed}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-input[type=number],input[type=text]{font:inherit;color:var(--ink);background:var(--sheet);border:1px solid var(--line);
+input[type=number],input[type=text],input[type=search],input[type=password]{font:inherit;color:var(--ink);background:var(--sheet);border:1px solid var(--line);
   border-radius:10px;padding:9px 12px;min-height:44px;width:100%;max-width:280px}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .echo{color:var(--ink2);font-size:.9rem}
@@ -85,6 +85,25 @@ input[type=number],input[type=text]{font:inherit;color:var(--ink);background:var
 .tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;min-height:48px;justify-content:center;color:var(--ink2);text-decoration:none;font-size:.72rem;font-weight:600}
 .tabbar a i{font-style:normal;font-size:1.25rem;line-height:1.2}
 .tabbar a[aria-current="page"]{color:var(--ink)}
+.tabbar a.plus i{width:52px;height:52px;border-radius:50%;background:var(--bar);color:var(--bar-ink);display:flex;align-items:center;justify-content:center;font-size:1.7rem;font-weight:700;margin-top:-22px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+/* 사건 */
+.sync{font-size:.82rem;padding:6px 16px;background:var(--mute-bg);color:var(--ink2)}
+.sync.ok{background:var(--ok-bg);color:var(--ok)}.sync.err{background:var(--seal-bg);color:var(--seal)}
+.sync:empty{display:none}
+.tick{flex:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--sheet);color:transparent;font:inherit;font-weight:800;cursor:pointer;padding:0}
+.tick[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:var(--sheet)}
+.step.tk{display:flex;gap:10px;align-items:flex-start}
+.step.done .t{text-decoration:line-through;color:var(--ink2)}
+.todo{display:flex;gap:12px;align-items:center;background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px}
+.todo a{flex:1;min-width:0;color:var(--ink);text-decoration:none;display:flex;flex-direction:column}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:10px;color:var(--ink);text-decoration:none}
+.item div{display:flex;flex-direction:column;min-width:0}
+.pct{color:var(--kr);font-weight:700;white-space:nowrap}
+.prog{height:8px;background:var(--mute-bg);border-radius:999px;margin-top:12px;overflow:hidden}.prog i{display:block;height:100%;background:var(--ok)}
+.got{font:inherit;font-size:.8rem;font-weight:600;border:1px solid var(--line);background:var(--sheet);color:var(--ink2);border-radius:999px;padding:4px 12px;min-height:32px;margin-top:6px;cursor:pointer}
+.got[aria-pressed="true"]{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.act.ghost{background:var(--mute-bg);color:var(--ink)}
+.ta{font:inherit;width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--sheet);color:var(--ink)}
 .sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .sum div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .sum b{display:block;font-size:1.15rem}
@@ -120,21 +139,93 @@ tfoot td{font-weight:700;border-bottom:0}
 </head>
 <body>
 <header class="bar"><div class="bar-in"><b>법인 설립 가이드</b><span id="today"></span></div></header>
+<div class="sync" id="sync"></div>
 <div class="wrap">
 
-  <!-- 홈: 설립 유형·기본 정보 요약과 결과 카드 -->
+  <!-- 홈: 전체 사건 요약과 다음 할 일 -->
   <div class="view on" id="v-home">
+    <div class="grid" id="m-grid" style="margin-top:4px"></div>
+    <h3 style="margin-top:22px">다음 할 일</h3>
+    <div id="m-next"></div>
+  </div>
+
+  <!-- 사건 목록 -->
+  <div class="view" id="v-cases">
+    <div class="row" style="flex-wrap:nowrap"><input id="q" type="search" placeholder="사건명·고객사 검색" style="max-width:none;flex:1"><a class="act" href="#new" style="margin:0;text-decoration:none;display:inline-flex;align-items:center;white-space:nowrap">＋ 추가</a></div>
+    <div class="opts" id="cf" style="margin-top:12px"></div>
+    <div id="c-list"></div>
+  </div>
+
+  <!-- 새 사건 -->
+  <div class="view" id="v-new">
+    <div class="sub"><a class="back" href="#cases">‹ 사건</a><h2>새 사건</h2></div>
+    <section>
+      <div class="q"><label for="n-name">사건명</label><input id="n-name" type="text" placeholder="예: OO 한국 자회사 설립" style="max-width:none"></div>
+      <div class="q"><label for="n-client">고객사 (의뢰인)</label><input id="n-client" type="text" style="max-width:none"></div>
+      <div class="q"><span class="lab">설립 유형</span><div class="opts" id="n-track"></div></div>
+      <button class="act" id="n-go" type="button">만들고 기본 정보 입력</button>
+      <div id="n-msg"></div>
+      <p class="hint" style="margin-top:12px">사건 자료는 이 기기와, 더보기에서 연결한 비공개 GitHub 저장소에만 저장됩니다.</p>
+    </section>
+  </div>
+
+  <!-- 사건 상세 -->
+  <div class="view" id="v-case">
+    <div class="sub"><a class="back" href="#cases">‹ 사건</a><h2>사건 상세</h2></div>
+    <div id="k-head"></div>
+    <div id="k-warns"></div>
+    <h3 style="margin-top:20px">다음 할 일</h3>
+    <div id="k-next"></div>
+    <div class="grid" id="k-grid"></div>
+    <p class="small copy-msg" style="margin-top:8px"></p>
+    <section>
+      <h3>사건 정보</h3>
+      <div class="q"><label for="k-name">사건명</label><input id="k-name" data-cf="name" type="text" style="max-width:none"></div>
+      <div class="q"><label for="k-client">고객사 (의뢰인)</label><input id="k-client" data-cf="client" type="text" style="max-width:none"></div>
+      <div class="q"><label for="k-memo">메모</label><textarea id="k-memo" data-cf="memo" rows="4" class="ta"></textarea></div>
+      <div class="row" style="margin-top:4px"><button class="act" id="k-done" type="button"></button><button class="act ghost" id="k-del" type="button">삭제</button></div>
+    </section>
+  </div>
+
+  <!-- 가이드: 사건 없이 규칙만 빠르게 보기 -->
+  <div class="view" id="v-guide">
     <a class="case" href="#input" id="h-case"></a>
     <div id="warns"></div>
     <div class="grid" id="h-grid"></div>
-    <p class="small" id="copy-msg" style="margin-top:8px"></p>
-    <p class="small" id="data-msg" style="margin-top:16px">규칙 데이터를 읽는 중입니다.</p>
-    <p class="small" style="margin-top:8px">내부 검토용입니다. "확인필요" 표시가 있는 항목은 확정 전에 고객에게 그대로 안내하지 마세요. 입력한 값은 저장되지 않습니다.</p>
+    <p class="small copy-msg" style="margin-top:8px"></p>
+    <p class="small" style="margin-top:8px">내부 검토용입니다. "확인필요" 표시가 있는 항목은 확정 전에 고객에게 그대로 안내하지 마세요. 가이드에서 넣은 값은 저장되지 않습니다. 저장하려면 사건을 만드세요.</p>
+  </div>
+
+  <!-- 더보기: GitHub 연결, 규칙 데이터 정보 -->
+  <div class="view" id="v-more">
+    <section>
+      <h2>GitHub 연결 (사건 자료 저장)</h2>
+      <p class="hint">사건 자료는 비공개 저장소의 cases.json 파일 하나에 저장됩니다. 토큰은 이 기기의 브라우저에만 보관되고 GitHub 말고 다른 곳으로 보내지 않습니다.</p>
+      <div class="q"><label for="g-repo">저장소 (아이디/이름)</label><input id="g-repo" type="text" placeholder="kjsh1028/incorp-cases" autocapitalize="off" autocorrect="off" spellcheck="false" style="max-width:none"></div>
+      <div class="q"><label for="g-token">토큰</label><input id="g-token" type="password" placeholder="github_pat_로 시작" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off" style="max-width:none"></div>
+      <div class="row"><button class="act" id="g-save" type="button">저장하고 연결</button><button class="act ghost" id="g-sync" type="button">지금 동기화</button><button class="act ghost" id="g-clear" type="button">연결 끊기</button></div>
+      <div id="g-msg"></div>
+      <details style="margin-top:14px"><summary style="cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center">토큰 만드는 법</summary>
+        <ol class="plain">
+          <li>github.com 로그인 → 오른쪽 위 사진 → Settings → 맨 아래 Developer settings</li>
+          <li>Personal access tokens → Fine-grained tokens → Generate new token</li>
+          <li>Repository access: Only select repositories → 사건 저장소(예: incorp-cases)만 선택</li>
+          <li>Permissions → Repository permissions → Contents: Read and write</li>
+          <li>만든 토큰을 복사해 위 칸에 붙여넣고 "저장하고 연결"</li>
+        </ol>
+        <p class="hint">토큰이 만료되면 새로 만들어 다시 붙여넣으면 됩니다. 사건 자료는 그대로 남습니다.</p>
+      </details>
+    </section>
+    <section>
+      <h2>규칙 데이터</h2>
+      <p class="small" id="data-msg">규칙 데이터를 읽는 중입니다.</p>
+      <p class="small" style="margin-top:8px">내부 검토용입니다. "확인필요" 표시가 있는 항목은 확정 전에 고객에게 그대로 안내하지 마세요.</p>
+    </section>
   </div>
 
   <!-- 설립 유형과 기본 정보 입력 -->
   <div class="view" id="v-input">
-    <div class="sub"><a class="back" href="#home">‹ 완료</a><h2>설립 유형과 기본 정보</h2></div>
+    <div class="sub"><a class="back" data-ctx="1" href="#guide">‹ 완료</a><h2>설립 유형과 기본 정보</h2></div>
     <section aria-labelledby="h-track">
       <h2 id="h-track">어떤 설립인가요</h2>
       <div class="q"><span class="lab">어디에 세우나요</span><div class="opts" id="o-where"></div></div>
@@ -152,22 +243,24 @@ tfoot td{font-weight:700;border-bottom:0}
       <div id="inputs"></div>
       <div id="warns-in"></div>
     </section>
-    <a class="act" href="#home" style="display:inline-flex;align-items:center;text-decoration:none">결과 보기</a>
+    <a class="act" data-ctx="1" href="#guide" style="display:inline-flex;align-items:center;text-decoration:none">결과 보기</a>
   </div>
 
-  <div class="view" id="v-proc"><div class="sub"><a class="back" href="#home">‹ 홈</a><h2>절차와 일정</h2></div><section><div id="p-proc"></div></section></div>
-  <div class="view" id="v-doc"><div class="sub"><a class="back" href="#home">‹ 홈</a><h2>서류</h2></div><section><div id="p-doc"></div></section></div>
-  <div class="view" id="v-ag"><div class="sub"><a class="back" href="#home">‹ 홈</a><h2>신청·제출 기관</h2></div><section><div id="p-ag"></div></section></div>
-  <div class="view" id="v-cost"><div class="sub"><a class="back" href="#home">‹ 홈</a><h2>비용</h2></div><section><div id="p-cost"></div></section></div>
-  <div class="view" id="v-chk"><div class="sub"><a class="back" href="#home">‹ 홈</a><h2>적용된 규칙과 확인필요</h2></div><section><div id="p-chk"></div></section></div>
+  <div class="view" id="v-proc"><div class="sub"><a class="back" data-ctx="1" href="#guide">‹ 가이드</a><h2>절차와 일정</h2></div><section><div id="p-proc"></div></section></div>
+  <div class="view" id="v-doc"><div class="sub"><a class="back" data-ctx="1" href="#guide">‹ 가이드</a><h2>서류</h2></div><section><div id="p-doc"></div></section></div>
+  <div class="view" id="v-ag"><div class="sub"><a class="back" data-ctx="1" href="#guide">‹ 가이드</a><h2>신청·제출 기관</h2></div><section><div id="p-ag"></div></section></div>
+  <div class="view" id="v-cost"><div class="sub"><a class="back" data-ctx="1" href="#guide">‹ 가이드</a><h2>비용</h2></div><section><div id="p-cost"></div></section></div>
+  <div class="view" id="v-chk"><div class="sub"><a class="back" data-ctx="1" href="#guide">‹ 가이드</a><h2>적용된 규칙과 확인필요</h2></div><section><div id="p-chk"></div></section></div>
+</div>
+
 </div>
 
 <nav class="tabbar" aria-label="주 메뉴">
   <a href="#home" data-view="home"><i aria-hidden="true">🏠</i>홈</a>
-  <a href="#proc" data-view="proc"><i aria-hidden="true">📋</i>절차</a>
-  <a href="#doc" data-view="doc"><i aria-hidden="true">📄</i>서류</a>
-  <a href="#cost" data-view="cost"><i aria-hidden="true">💰</i>비용</a>
-  <a href="#chk" data-view="chk"><i aria-hidden="true">⚠️</i>확인필요</a>
+  <a href="#cases" data-view="cases"><i aria-hidden="true">🗂️</i>사건</a>
+  <a href="#new" data-view="new" class="plus"><i aria-hidden="true">＋</i>새 사건</a>
+  <a href="#guide" data-view="guide"><i aria-hidden="true">📖</i>가이드</a>
+  <a href="#more" data-view="more"><i aria-hidden="true">⋯</i>더보기</a>
 </nav>
 
 <!-- 파일을 직접 열 때(file://) 쓰는 규칙 데이터 묶음. tools/build_data.py 가 data/ 의 JSON으로 만든다. -->
@@ -295,16 +388,18 @@ function paintInputs(){
   }
  });
 }
-function ctx(){
+function ctxOf(Tt,vals){
  var c={};
- T.inputs.inputs.forEach(function(i){var v=V[i.key];if(i.type==="number")v=Math.max(0,Number(v)||0);c[i.key]=v});
- (T.inputs.derived||[]).forEach(function(d){c[d.key]=evalExpr(d.expr,c)});
+ Tt.inputs.inputs.forEach(function(i){var v=vals[i.key];if(i.type==="number")v=Math.max(0,Number(v)||0);c[i.key]=v});
+ (Tt.inputs.derived||[]).forEach(function(d){c[d.key]=evalExpr(d.expr,c)});
  return c;
 }
+function ctx(){return ctxOf(T,V)}
 
 /* ---------- 계산 ---------- */
-function plan(c){
- var on=T.process.steps.filter(function(s){return when(s.applies,c)}), ids={}, fin={};
+function plan(c){return planOf(T,c)}
+function planOf(Tt,c){
+ var on=Tt.process.steps.filter(function(s){return when(s.applies,c)}), ids={}, fin={};
  on.forEach(function(s){ids[s.id]=s});
  function f(id){
   if(fin[id])return fin[id];
@@ -361,9 +456,9 @@ function renderTrack(){
  $("guide").hidden=!T;
  $("track-msg").innerHTML=tr?(T?'<p class="note">'+esc(tr.note)+'</p>':'<p class="warn">'+esc(tr.note||"준비 중입니다.")+'</p>'):'';
 }
-function renderWarn(c){var h=warnings(c).map(function(x){return '<p class="warn">'+esc(x)+'</p>'}).join("");$("warns").innerHTML=h;$("warns-in").innerHTML=h}
+function renderWarn(c){var h=warnings(c).map(function(x){return '<p class="warn">'+esc(x)+'</p>'}).join("");$("warns").innerHTML=h;$("warns-in").innerHTML=h;$("k-warns").innerHTML=h}
 function renderProc(c,p){
- var P=T.process, ph={};
+ var P=T.process, ph={}, cs=curCase();
  P.phases.forEach(function(x){ph[x.id]=x});
  var h='<div class="sum"><div><b>'+p.on.length+'단계</b><span>이 사건에 해당하는 절차</span></div><div><b>약 '+p.tot[0]+'~'+p.tot[1]+'일</b><span>선행 관계 기준 단순 계산'+(p.undated.length?', 기간 미정 '+p.undated.length+'단계 제외':'')+'</span></div></div>';
  h+='<div class="legend"><span><i style="background:var(--kr)"></i>한국 쪽</span><span><i style="background:var(--cn)"></i>중국 쪽 (고객)</span></div>';
@@ -375,7 +470,8 @@ function renderProc(c,p){
   var cn=(s.side||phase.side)==="CN";
   var who=(s.actor||[]).map(function(a){return P.actors[a]||a}).join(" + ");
   var d=!s.days?"기간 미정":(s.days[0]===s.days[1]?s.days[0]+"일":s.days[0]+"~"+s.days[1]+"일");
-  h+='<div class="step'+(cn?' cn':'')+'"><div class="t">'+esc(s.task)+(s.status==="needs_check"?tagChk():'')+'</div><div class="meta">'+esc(s.id)+' / '+esc(who)+' / '+esc(d)+' / 산출물: '+esc(s.output)+'</div>'+(s.deadline?'<div class="meta">기한: '+esc(s.deadline)+'</div>':'')+(s.note?'<div class="meta">'+esc(s.note)+'</div>':'')+'</div>';
+  var dn=cs&&(cs.steps||{})[s.id];
+  h+='<div class="step'+(cn?' cn':'')+(cs?' tk':'')+(dn?' done':'')+'">'+(cs?'<button class="tick" type="button" data-step="'+esc(s.id)+'" aria-pressed="'+!!dn+'" aria-label="완료 표시">✓</button>':'')+'<div><div class="t">'+esc(s.task)+(s.status==="needs_check"?tagChk():'')+'</div><div class="meta">'+esc(s.id)+' / '+esc(who)+' / '+esc(d)+' / 산출물: '+esc(s.output)+'</div>'+(s.deadline?'<div class="meta">기한: '+esc(s.deadline)+'</div>':'')+(s.note?'<div class="meta">'+esc(s.note)+'</div>':'')+(dn?'<div class="meta">완료 '+esc(dn)+'</div>':'')+'</div></div>';
  });
  if(cur)h+='</div>';
  $("p-proc").innerHTML=h;
@@ -393,13 +489,14 @@ function submitTo(list){
  return (list||[]).map(function(x){return L[x]||A[x]||x}).join(", ");
 }
 function renderDoc(c){
- var DD=T.documents, on=docsOn(c), extra=effectsList(c,"documents_extra"), dont=effectsList(c,"client_guide_dont");
+ var cs=curCase(), DD=T.documents, on=docsOn(c), extra=effectsList(c,"documents_extra"), dont=effectsList(c,"client_guide_dont");
  var nNot=on.filter(function(d){return d.notarize}).length;
  var h='<div class="sum"><div><b>'+(on.length+extra.length)+'종</b><span>준비할 서류</span></div><div><b>'+nNot+'종</b><span>공증과 아포스티유가 필요한 서류</span></div></div>';
  if(dont.length)h+='<div class="note"><b>고객에게 꼭 알릴 것</b><ul class="plain">'+dont.map(function(x){return '<li>'+esc(x.text)+'</li>'}).join("")+'</ul></div>';
  on.forEach(function(d){
   var nt=(d.notarize?'필요':'불요')+(d.notarize_note?' ('+d.notarize_note+')':'')+' / 아포스티유 '+(d.apostille?'필요':'불요');
-  h+='<div class="doc"><h3>'+esc(d.name)+(d.status==="needs_check"?tagChk():'')+'</h3><dl class="kv"><dt>서명·발급</dt><dd>'+esc(d.signer||d.issuer)+'</dd><dt>부수·형태</dt><dd>'+esc(docQty(d))+'</dd><dt>공증</dt><dd>'+esc(nt)+'</dd><dt>번역</dt><dd>'+esc(d.translation||"-")+'</dd><dt>제출처</dt><dd>'+esc(submitTo(d.submit_to))+(d.use?' ('+esc(d.use)+')':'')+'</dd>'+(d.note?'<dt>비고</dt><dd>'+esc(d.note)+'</dd>':'')+(d.basis?'<dt>근거</dt><dd>'+esc(d.basis)+'</dd>':'')+'</dl></div>';
+  var got=cs&&(cs.docs||{})[d.id];
+  h+='<div class="doc"><h3>'+esc(d.name)+(d.status==="needs_check"?tagChk():'')+'</h3>'+(cs?'<button class="got" type="button" data-docst="'+esc(d.id)+'" aria-pressed="'+!!got+'">'+(got?'✓ 받음 '+esc(got):'받기 전')+'</button>':'')+'<dl class="kv"><dt>서명·발급</dt><dd>'+esc(d.signer||d.issuer)+'</dd><dt>부수·형태</dt><dd>'+esc(docQty(d))+'</dd><dt>공증</dt><dd>'+esc(nt)+'</dd><dt>번역</dt><dd>'+esc(d.translation||"-")+'</dd><dt>제출처</dt><dd>'+esc(submitTo(d.submit_to))+(d.use?' ('+esc(d.use)+')':'')+'</dd>'+(d.note?'<dt>비고</dt><dd>'+esc(d.note)+'</dd>':'')+(d.basis?'<dt>근거</dt><dd>'+esc(d.basis)+'</dd>':'')+'</dl></div>';
  });
  if(extra.length){
   h+='<div class="doc"><h3>규칙에만 적힌 추가 서류<span class="tag chk">확인필요</span></h3><p class="meta">서명·부수·공증 여부가 아직 서류 목록에 정리되지 않았습니다.</p><ul class="plain">'+extra.map(function(x){return '<li>'+esc(x.text)+' <span class="small">('+esc(x.rule)+')</span></li>'}).join("")+'</ul></div>';
@@ -455,7 +552,7 @@ function renderChk(c,p){
  if(oi.length)h+='<h3 style="margin-top:20px">모든 사건에 남아 있는 미해결 항목</h3><ul class="plain">'+oi.map(function(x){return '<li>'+esc(x.text)+' <span class="small">('+esc(x.id)+(x.owner?', 담당 '+esc(x.owner):'')+')</span></li>'}).join("")+'</ul>';
  $("p-chk").innerHTML=h;
 }
-/* 홈: 입력 요약 한 줄과 결과 카드 */
+/* ---------- 요약 카드 ---------- */
 function plain(label){return String(label).replace(/\s*\([^)]*\)\s*$/,"")}
 function inputChips(){
  return shownInputs().map(function(i){
@@ -466,52 +563,218 @@ function inputChips(){
   return name+" "+v;
  }).filter(Boolean);
 }
-function renderHome(c,p){
- var tr=null;D.tracks.tracks.forEach(function(t){if(t.id===TRACK)tr=t});
- var where="";D.tracks.where.forEach(function(w){if(tr&&w.id===tr.where)where=w.label});
- var title=tr?where+" · "+tr.label:"설립 유형을 고르세요";
- $("h-case").innerHTML='<div class="top"><b>'+esc(title)+'</b><span>수정 ›</span></div>'
-  +(T?'<div class="chips">'+inputChips().map(function(x){return '<span>'+esc(x)+'</span>'}).join("")+'</div>':(tr?'<p class="warn">'+esc(tr.note||"준비 중입니다.")+'</p>':''));
- if(!T){$("h-grid").innerHTML="";$("warns").innerHTML="";return}
+function chipsHtml(){return '<div class="chips">'+inputChips().map(function(x){return '<span>'+esc(x)+'</span>'}).join("")+'</div>'}
+function card(href,k,big,sub,color,attr){return '<'+(href?'a href="'+href+'"':'button type="button"')+' class="card" style="--c:var('+color+')"'+(attr||'')+'><span class="k">'+esc(k)+'</span><b>'+esc(big)+'</b><span class="s">'+esc(sub)+'</span></'+(href?'a':'button')+'>'}
+function cardsHtml(c,p,cs){
  var t=taxes(c), docs=docsOn(c), extra=effectsList(c,"documents_extra"), ag=agenciesOn(p), kr=ag.filter(function(a){return a.side!=="CN"}).length;
  var nChk=rulesOn(c).filter(function(r){return r.status==="needs_check"}).length+checkOthers(c,p).length;
- var cards=[
-  ["proc","절차",p.on.length+"단계","약 "+p.tot[0]+"~"+p.tot[1]+"일","--kr"],
-  ["doc","서류",(docs.length+extra.length)+"종","공증·아포스티유 "+docs.filter(function(d){return d.notarize}).length+"종","--cn"],
-  ["cost","비용",won(t.sum),"세금·공과금 자동 계산","--ok"],
-  ["ag","기관",ag.length+"곳","한국 "+kr+" · 중국 "+(ag.length-kr),"--ink2"],
-  ["chk","확인필요",nChk+"건","확정 전 고객 안내 금지","--seal"]
- ];
- $("h-grid").innerHTML=cards.map(function(x){
-  return '<a class="card" href="#'+x[0]+'" style="--c:var('+x[4]+')"><span class="k">'+esc(x[1])+'</span><b>'+esc(x[2])+'</b><span class="s">'+esc(x[3])+'</span></a>';
- }).join("")+'<button class="card" id="copy" type="button" style="--c:var(--ink)"><span class="k">안내 요약</span><b>복사</b><span class="s">메일·메신저에 붙여넣기</span></button>';
+ var st=cs?cs.steps||{}:{}, dd=cs?cs.docs||{}:{};
+ var nDone=p.on.filter(function(s){return st[s.id]}).length, nGot=docs.filter(function(d){return dd[d.id]}).length;
+ return card("#proc","절차",cs?nDone+"/"+p.on.length:p.on.length+"단계",cs?"완료한 단계":"약 "+p.tot[0]+"~"+p.tot[1]+"일","--kr")
+  +card("#doc","서류",cs?nGot+"/"+docs.length:(docs.length+extra.length)+"종",cs?"받은 서류":"공증·아포스티유 "+docs.filter(function(d){return d.notarize}).length+"종","--cn")
+  +card("#cost","비용",won(t.sum),"세금·공과금 자동 계산","--ok")
+  +card("#ag","기관",ag.length+"곳","한국 "+kr+" · 중국 "+(ag.length-kr),"--ink2")
+  +card("#chk","확인필요",nChk+"건","확정 전 고객 안내 금지","--seal")
+  +card(null,"안내 요약","복사","메일·메신저에 붙여넣기","--ink",' data-copy="1"');
+}
+/* 가이드 화면(사건 없이) */
+function renderGuide(c,p){
+ $("h-case").innerHTML='<div class="top"><b>'+esc(trackTitle(TRACK)||"설립 유형을 고르세요")+'</b><span>수정 ›</span></div>'
+  +(T?chipsHtml():(trackOf(TRACK)?'<p class="warn">'+esc(trackOf(TRACK).note||"준비 중입니다.")+'</p>':''));
+ $("h-grid").innerHTML=T?cardsHtml(c,p,null):"";
+ if(!T)$("warns").innerHTML="";
+}
+
+/* ---------- 사건 ----------
+   사건은 STORE.cases 에 두고 이 기기(localStorage)와 비공개 GitHub 저장소의 cases.json 에 저장한다.
+   지운 사건은 {id, deleted, updated} 만 남겨 다른 기기에도 지워지게 한다. */
+var STORE={cases:[]}, CUR=null, GUIDE={track:null,V:null,fees:{}}, CF="active", NEWTRACK=null;
+function nowISO(){return new Date().toISOString()}
+function today(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+function liveCases(){return STORE.cases.filter(function(x){return !x.deleted})}
+function findCase(id){for(var i=0;i<STORE.cases.length;i++)if(STORE.cases[i].id===id&&!STORE.cases[i].deleted)return STORE.cases[i];return null}
+function curCase(){return CUR?findCase(CUR):null}
+function trackOf(id){var r=null;D.tracks.tracks.forEach(function(t){if(t.id===id)r=t});return r}
+function trackTitle(id){var tr=trackOf(id);if(!tr)return "";var w="";D.tracks.where.forEach(function(x){if(x.id===tr.where)w=x.label});return w+" · "+tr.label}
+function touch(cs){cs.updated=nowISO();scheduleSave()}
+function changed(){var cs=curCase();if(cs){cs.inputs=V;cs.track=TRACK;touch(cs)}}
+function useTrack(id,vals){
+ TRACK=id;T=D.data[id]||null;
+ if(!T){V=vals||{};return}
+ initValues();
+ if(vals)Object.keys(vals).forEach(function(k){if(Object.prototype.hasOwnProperty.call(V,k))V[k]=vals[k]});
+ buildInputs();
+}
+function enterGuide(){if(CUR===null&&V===GUIDE.V)return;CUR=null;useTrack(GUIDE.track,GUIDE.V);GUIDE.V=V;FEE=GUIDE.fees}
+function enterCase(cs,force){
+ if(!force&&CUR===cs.id&&V===cs.inputs)return;
+ CUR=cs.id;useTrack(cs.track,cs.inputs);cs.inputs=V;cs.fees=cs.fees||{};FEE=cs.fees;
+}
+function selectTrack(id){
+ useTrack(id,null);
+ var cs=curCase();
+ if(cs){cs.track=id;cs.inputs=V;touch(cs)}else{GUIDE.track=id;GUIDE.V=V}
+ render();
+}
+function progressOf(cs){
+ var Tt=D.data[cs.track];if(!Tt)return {done:0,total:0,next:[]};
+ var p=planOf(Tt,ctxOf(Tt,cs.inputs||{})), st=cs.steps||{};
+ var done=p.on.filter(function(s){return st[s.id]}).length;
+ var next=p.on.filter(function(s){return !st[s.id]&&(s.prereq||[]).every(function(q){return !p.ids[q]||st[q]})});
+ if(!next.length)next=p.on.filter(function(s){return !st[s.id]});
+ return {done:done,total:p.on.length,next:next};
+}
+function pctOf(pr){return pr.total?Math.round(pr.done*100/pr.total):0}
+function todoHtml(cs,steps,showCase,href){
+ return steps.map(function(s){
+  return '<div class="todo"><button class="tick" type="button" data-step="'+esc(s.id)+'" data-case="'+esc(cs.id)+'" aria-pressed="false" aria-label="완료 표시">✓</button><a href="'+(href||"#case-"+esc(cs.id))+'"><b>'+esc(s.task)+'</b><span class="small">'+esc((showCase?cs.name+" · ":"")+s.id)+'</span></a></div>';
+ }).join("");
+}
+function renderMain(){
+ var all=liveCases(), act=all.filter(function(x){return x.status!=="done"}), todo=[];
+ act.forEach(function(cs){var pr=progressOf(cs);if(pr.next[0])todo.push([cs,pr.next[0]])});
+ $("m-grid").innerHTML=card("#cases","진행 중",act.length+"건","사건 목록 보기","--cn",' data-setcf="active"')
+  +card("#cases","완료",(all.length-act.length)+"건","끝난 사건","--ok",' data-setcf="done"')
+  +card("#new","새 사건","＋","설립 유형 고르고 시작","--kr")
+  +card("#guide","가이드","보기","사건 없이 절차·서류 확인","--ink2");
+ $("m-next").innerHTML=todo.length?todo.map(function(x){return todoHtml(x[0],[x[1]],true)}).join(""):'<p class="note">'+(all.length?'진행 중인 사건의 남은 할 일이 없습니다.':'아직 사건이 없습니다. 아래 ＋ 버튼으로 새 사건을 만드세요.')+'</p>';
+}
+function renderCases(){
+ var q=($("q").value||"").trim().toLowerCase();
+ $("cf").innerHTML=[["active","진행 중"],["done","완료"]].map(function(x){return '<button type="button" data-cfilter="'+x[0]+'" aria-pressed="'+(CF===x[0])+'">'+x[1]+'</button>'}).join("");
+ var list=liveCases().filter(function(cs){return (CF==="done")===(cs.status==="done")})
+  .filter(function(cs){return !q||((cs.name||"")+" "+(cs.client||"")).toLowerCase().indexOf(q)>=0});
+ $("c-list").innerHTML=list.length?list.map(function(cs){
+  return '<a class="item" href="#case-'+esc(cs.id)+'"><div><b>'+esc(cs.name||"(이름 없음)")+'</b><span class="small">'+esc(trackTitle(cs.track)+(cs.client?" · "+cs.client:""))+'</span></div><span class="pct">'+pctOf(progressOf(cs))+'% ›</span></a>';
+ }).join(""):'<p class="note">'+(q?'검색 결과가 없습니다.':CF==="done"?'완료한 사건이 없습니다.':'진행 중인 사건이 없습니다. ＋ 추가로 새 사건을 만드세요.')+'</p>';
+}
+function renderNew(){
+ var ready=D.tracks.tracks.filter(function(t){return t.ready&&D.data[t.id]});
+ if(!NEWTRACK&&ready[0])NEWTRACK=ready[0].id;
+ $("n-track").innerHTML=ready.map(function(t){return '<button type="button" data-ntrack="'+esc(t.id)+'" aria-pressed="'+(t.id===NEWTRACK)+'">'+esc(trackTitle(t.id))+'</button>'}).join("")
+  +'<p class="hint" style="width:100%">다른 유형은 규칙 데이터를 넣은 뒤 열립니다.</p>';
+}
+function renderCaseDash(c,p){
+ var cs=curCase();if(!cs)return;
+ var pr=progressOf(cs), pct=pctOf(pr);
+ $("k-head").innerHTML='<a class="case" href="#input" style="margin-top:8px"><div class="top"><b>'+esc(cs.name||"(이름 없음)")+'</b><span>기본 정보 ›</span></div>'
+  +'<p class="small" style="margin-top:4px">'+esc((cs.client?cs.client+" · ":"")+trackTitle(cs.track)+(cs.status==="done"?" · 완료":""))+'</p>'
+  +(T?chipsHtml():'')+'<div class="prog"><i style="width:'+pct+'%"></i></div><p class="small" style="margin-top:4px">절차 '+pr.done+'/'+pr.total+' 완료 ('+pct+'%)</p></a>';
+ $("k-next").innerHTML=pr.next.length?todoHtml(cs,pr.next.slice(0,3),false,"#proc"):'<p class="note">남은 절차가 없습니다.</p>';
+ $("k-grid").innerHTML=T&&c?cardsHtml(c,p,cs):"";
+ ["name","client","memo"].forEach(function(f){var el=$("k-"+f);if(document.activeElement!==el)el.value=cs[f]||""});
+ $("k-done").textContent=cs.status==="done"?"진행 중으로 되돌리기":"사건 완료 처리";
 }
 function renderOut(){
  var c=ctx(), p=plan(c);
- renderWarn(c);renderHome(c,p);renderProc(c,p);renderDoc(c);renderAg(c,p);renderCost(c);renderChk(c,p);
+ renderWarn(c);
+ if(CUR)renderCaseDash(c,p);else renderGuide(c,p);
+ renderProc(c,p);renderDoc(c);renderAg(c,p);renderCost(c);renderChk(c,p);
 }
 function render(){
- renderTrack();
- if(!T){renderHome();return}
+ renderTrack();renderMain();renderCases();renderNew();
+ if(!T){if(CUR)renderCaseDash(null,null);else renderGuide();return}
  paintInputs();renderOut();
 }
 
 /* ---------- 화면 전환 ----------
-   주소 끝(#home, #doc ...)으로 화면을 바꾼다. iPhone에서 뒤로 밀기도 그대로 작동한다. */
-var VIEWS=["home","input","proc","doc","ag","cost","chk"];
+   주소 끝(#home, #case-사건ID, #doc ...)으로 화면을 바꾼다. iPhone에서 뒤로 밀기도 그대로 작동한다.
+   절차·서류 등 아래 화면은 지금 보고 있는 사건(없으면 가이드)의 값으로 그린다. */
+var VIEWS=["home","cases","new","case","guide","more","input","proc","doc","ag","cost","chk"];
+var SUBS=["input","proc","doc","ag","cost","chk"];
 function showView(){
- var v=location.hash.slice(1);
- if(VIEWS.indexOf(v)<0||(!T&&v!=="input"))v="home";
+ var v=location.hash.slice(1), m=/^case-(.+)$/.exec(v);
+ if(m){var cs=findCase(m[1]);if(cs){enterCase(cs);v="case"}else v="cases"}
+ else if(v==="guide")enterGuide();
+ if(VIEWS.indexOf(v)<0)v="home";
+ if(v==="case"&&!curCase())v="cases";
+ if(SUBS.indexOf(v)>0&&!T)v=CUR?"case":"guide";
+ safe(render);
  VIEWS.forEach(function(x){$("v-"+x).className="view"+(x===v?" on":"")});
- [].forEach.call(document.querySelectorAll(".tabbar a"),function(a){if(a.dataset.view===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+ var nav=SUBS.indexOf(v)>=0?(CUR?"cases":"guide"):v==="case"?"cases":v;
+ [].forEach.call(document.querySelectorAll(".tabbar a"),function(a){if(a.dataset.view===nav)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+ [].forEach.call(document.querySelectorAll("[data-ctx]"),function(a){
+  a.href=CUR?"#case-"+CUR:"#guide";
+  if(a.classList.contains("back"))a.textContent=a.textContent.indexOf("완료")>=0?"‹ 완료":(CUR?"‹ 사건":"‹ 가이드");
+ });
+ if(v==="more")renderMore();
  window.scrollTo(0,0);
 }
 window.addEventListener("hashchange",showView);
-function selectTrack(id){
- TRACK=id;T=D.data[id]||null;
- if(T){initValues();buildInputs()}
- render();
+
+/* ---------- GitHub 동기화 ----------
+   리걸트랙과 같은 방식: 비공개 저장소의 파일 하나를 GitHub API로 읽고 쓴다.
+   토큰은 이 기기 localStorage 에만 둔다(같은 github.io 주소의 다른 앱과 섞이지 않게 incorp: 를 붙인다). */
+var SY={repo:"",token:"",path:"cases.json",sha:null,busy:false,again:false,timer:null};
+function lsGet(k){try{return localStorage.getItem("incorp:"+k)}catch(e){return null}}
+function lsSet(k,v){try{if(v==null)localStorage.removeItem("incorp:"+k);else localStorage.setItem("incorp:"+k,v)}catch(e){}}
+function saveLocal(dirty){lsSet("store",JSON.stringify(STORE));if(dirty)lsSet("dirty","1")}
+function loadLocal(){try{var x=JSON.parse(lsGet("store")||"null");if(x&&x.cases)STORE=x}catch(e){}}
+function setSync(kind,text){var el=$("sync");el.className="sync "+kind;el.textContent=text}
+function syncIdle(){setSync("local","이 기기에만 저장 중입니다. 더보기에서 GitHub를 연결하세요.")}
+function b64e(str){var b=new TextEncoder().encode(str),x="";for(var i=0;i<b.length;i+=8192)x+=String.fromCharCode.apply(null,b.subarray(i,i+8192));return btoa(x)}
+function b64d(str){var x=atob(String(str).replace(/\s/g,"")),b=new Uint8Array(x.length);for(var i=0;i<x.length;i++)b[i]=x.charCodeAt(i);return new TextDecoder().decode(b)}
+function ghFetch(path,opt){
+ opt=opt||{};
+ return fetch("https://api.github.com/repos/"+SY.repo+path,{method:opt.method||"GET",cache:"no-store",
+  headers:{"Authorization":"Bearer "+SY.token,"Accept":"application/vnd.github+json"},body:opt.body?JSON.stringify(opt.body):undefined});
 }
+function ghErr(r){return Error(r.status===401?"토큰이 맞지 않거나 만료되었습니다.":r.status===403?"토큰에 이 저장소의 Contents 읽기·쓰기 권한이 없습니다.":r.status===404?"저장소를 찾을 수 없습니다. 저장소 이름과 토큰의 저장소 선택을 확인하세요.":"GitHub 응답 오류 ("+r.status+")")}
+function syncMsg(e){var m=(e&&e.message)||String(e);return /fetch|network|load failed/i.test(m)?"인터넷에 연결되지 않아 이 기기에만 저장했습니다. 연결되면 다시 올립니다.":m}
+function mergeCases(local,remote){
+ var m={},order=[];
+ local.forEach(function(x){m[x.id]=x;order.push(x.id)});
+ remote.forEach(function(r){var l=m[r.id];if(!l){order.push(r.id);m[r.id]=r}else if(String(r.updated)>String(l.updated))m[r.id]=r});
+ return order.map(function(id){return m[id]}).sort(function(a,b){return String(b.created||"").localeCompare(String(a.created||""))});
+}
+function readRemote(){
+ return ghFetch("/contents/"+SY.path).then(function(r){
+  if(r.status===404)return ghFetch("").then(function(r2){if(!r2.ok)throw ghErr(r2);return null});
+  if(!r.ok)throw ghErr(r);
+  return r.json();
+ }).then(function(j){
+  if(!j){SY.sha=null;return}
+  SY.sha=j.sha;
+  STORE.cases=mergeCases(STORE.cases,(JSON.parse(b64d(j.content)).cases)||[]);
+ });
+}
+function pull(){
+ if(!SY.token||!SY.repo){syncIdle();return Promise.resolve()}
+ if(SY.busy){SY.again=true;return Promise.resolve()}
+ setSync("busy","GitHub에서 불러오는 중");
+ return readRemote().then(function(){
+  saveLocal(false);
+  if(CUR){var cs=findCase(CUR);if(cs&&cs.inputs!==V)enterCase(cs,true);else if(!cs)CUR=null}
+  if(lsGet("dirty"))return push();
+  setSync("ok","✓ GitHub 동기화 완료");
+ }).catch(function(e){setSync("err",syncMsg(e))}).then(function(){safe(render)});
+}
+function push(){
+ if(!SY.token||!SY.repo){syncIdle();return Promise.resolve()}
+ if(SY.busy){SY.again=true;return Promise.resolve()}
+ SY.busy=true;setSync("busy","GitHub에 저장하는 중");
+ function put(retry){
+  var body={message:"사건 자료 갱신",content:b64e(JSON.stringify({version:1,updated:nowISO(),cases:STORE.cases},null,1))};
+  if(SY.sha)body.sha=SY.sha;
+  return ghFetch("/contents/"+SY.path,{method:"PUT",body:body}).then(function(r){
+   if((r.status===409||r.status===422)&&retry)return readRemote().then(function(){saveLocal(true);return put(false)});
+   if(!r.ok)throw ghErr(r);
+   return r.json().then(function(j){SY.sha=j.content.sha;lsSet("dirty",null);setSync("ok","✓ GitHub 저장 완료")});
+  });
+ }
+ return put(true).catch(function(e){setSync("err",syncMsg(e))}).then(function(){
+  SY.busy=false;
+  if(SY.again){SY.again=false;return push()}
+ });
+}
+function scheduleSave(){saveLocal(true);if(!SY.token)syncIdle();clearTimeout(SY.timer);SY.timer=setTimeout(push,1200)}
+function renderMore(){
+ $("g-repo").value=SY.repo;
+ $("g-token").value="";
+ $("g-token").placeholder=SY.token?"저장됨 (바꾸려면 새 토큰을 붙여넣기)":"github_pat_로 시작";
+}
+window.addEventListener("online",function(){if(lsGet("dirty"))push()});
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&D)pull()});
 function summary(){
  var c=ctx(), p=plan(c), t=taxes(c), L=[];
  L.push("["+T.inputs.title+" 안내 요약]");
@@ -557,33 +820,79 @@ function importCase(j){
 }
 
 /* ---------- 이벤트 ---------- */
+function copyMsg(t){[].forEach.call(document.querySelectorAll(".copy-msg"),function(el){el.textContent=t})}
 document.addEventListener("click",function(e){
+ var cf=e.target.closest("[data-setcf]");if(cf){CF=cf.dataset.setcf}
  var b=e.target.closest("button");if(!b||!D)return;
+ var cs=curCase();
  if(b.dataset.where){var ts=tracksAt(b.dataset.where);if(ts.length)selectTrack(ts[0].id)}
  else if(b.dataset.track)selectTrack(b.dataset.track);
- else if(b.dataset.in){V[b.dataset.in]=JSON.parse(b.dataset.v);render()}
+ else if(b.dataset.in){V[b.dataset.in]=JSON.parse(b.dataset.v);changed();render()}
+ else if(b.dataset.step){
+  var k=b.dataset.case?findCase(b.dataset.case):cs;if(!k)return;
+  k.steps=k.steps||{};
+  if(k.steps[b.dataset.step])delete k.steps[b.dataset.step];else k.steps[b.dataset.step]=today();
+  touch(k);safe(render);
+ }
+ else if(b.dataset.docst&&cs){
+  cs.docs=cs.docs||{};
+  if(cs.docs[b.dataset.docst])delete cs.docs[b.dataset.docst];else cs.docs[b.dataset.docst]=today();
+  touch(cs);safe(render);
+ }
+ else if(b.dataset.cfilter){CF=b.dataset.cfilter;renderCases()}
+ else if(b.dataset.ntrack){NEWTRACK=b.dataset.ntrack;renderNew()}
+ else if(b.id==="n-go"){
+  var name=$("n-name").value.trim();
+  if(!name){$("n-msg").innerHTML='<p class="warn">사건명을 넣어 주세요.</p>';return}
+  var id="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  var nc={id:id,name:name,client:$("n-client").value.trim(),track:NEWTRACK,status:"active",inputs:null,steps:{},docs:{},fees:{},memo:"",created:nowISO(),updated:nowISO()};
+  STORE.cases.unshift(nc);enterCase(nc,true);touch(nc);
+  $("n-name").value="";$("n-client").value="";$("n-msg").innerHTML="";
+  location.hash="#input";
+ }
+ else if(b.id==="k-done"&&cs){cs.status=cs.status==="done"?"active":"done";touch(cs);safe(render)}
+ else if(b.id==="k-del"&&cs){
+  if(!confirm("이 사건을 지울까요? 연결된 다른 기기에서도 지워집니다."))return;
+  for(var i=0;i<STORE.cases.length;i++)if(STORE.cases[i].id===cs.id)STORE.cases[i]={id:cs.id,deleted:true,updated:nowISO()};
+  CUR=null;scheduleSave();location.hash="#cases";
+ }
+ else if(b.id==="g-save"){
+  SY.repo=$("g-repo").value.trim().replace(/^https?:\/\/github\.com\//,"").replace(/\/+$/,"");
+  var tk=$("g-token").value.trim();if(tk)SY.token=tk;
+  lsSet("repo",SY.repo);lsSet("token",SY.token||null);SY.sha=null;
+  $("g-msg").innerHTML='<p class="note">연결하는 중입니다. 위쪽 띠에 결과가 나옵니다.</p>';
+  renderMore();pull().then(function(){$("g-msg").innerHTML=""});
+ }
+ else if(b.id==="g-sync")pull();
+ else if(b.id==="g-clear"){
+  if(!confirm("이 기기에서 GitHub 연결을 끊을까요? 이 기기의 사건 자료는 남습니다."))return;
+  SY.token="";lsSet("token",null);renderMore();syncIdle();
+ }
  else if(b.id==="imp-go"){
   var box=$("imp-msg");
   try{
    var j=JSON.parse($("imp").value), r=importCase(j);
-   render();
+   changed();render();
    var rv=(j.review||[]).map(function(x){return "<li>"+esc(x)+"</li>"}).join("");
    box.innerHTML='<p class="note">'+r.n+'개 항목을 채웠습니다'+(j.client_name?' ('+esc(j.client_name)+')':'')+'. 아래 값을 눈으로 확인해 주세요.</p>'
     +(r.bad.length?'<p class="warn">선택지에 없는 값이라 채우지 않은 항목: '+esc(r.bad.join(", "))+'</p>':'')
     +(rv?'<div class="warn">직접 확인할 항목<ul class="plain">'+rv+'</ul></div>':'');
   }catch(err){box.innerHTML='<p class="warn">읽지 못했습니다. 사건 데이터 전체를 그대로 붙여넣었는지 확인해 주세요.</p>'}
  }
- else if(b.id==="copy"){
-  var txt=summary(), msg=$("copy-msg");
+ else if(b.dataset.copy){
+  var txt=summary();
   try{
-   navigator.clipboard.writeText(txt).then(function(){msg.textContent="안내 요약을 복사했습니다."},function(){msg.textContent="복사하지 못했습니다. 브라우저에서 클립보드 권한을 허용해 주세요."});
-  }catch(err){msg.textContent="복사하지 못했습니다. 이 화면에서는 클립보드를 쓸 수 없습니다."}
+   navigator.clipboard.writeText(txt).then(function(){copyMsg("안내 요약을 복사했습니다.")},function(){copyMsg("복사하지 못했습니다. 브라우저에서 클립보드 권한을 허용해 주세요.")});
+  }catch(err){copyMsg("복사하지 못했습니다. 이 화면에서는 클립보드를 쓸 수 없습니다.")}
  }
 });
 document.addEventListener("input",function(e){
- var el=e.target;
- if(el.dataset&&el.dataset.fee){FEE[el.dataset.fee]=el.value;return}
- if(el.dataset&&el.dataset.in&&el.tagName==="INPUT"){V[el.dataset.in]=el.value;safe(function(){paintInputs();renderOut()})}
+ var el=e.target, cs=curCase();
+ if(!el.dataset||!D)return;
+ if(el.id==="q"){renderCases();return}
+ if(el.dataset.fee){FEE[el.dataset.fee]=el.value;if(cs)touch(cs);return}
+ if(el.dataset.cf&&cs){cs[el.dataset.cf]=el.value;touch(cs);safe(function(){renderCaseDash(T?ctx():null,T?plan(ctx()):null)});return}
+ if(el.dataset.in&&el.tagName==="INPUT"){V[el.dataset.in]=el.value;changed();safe(function(){paintInputs();renderOut()})}
 });
 function fail(err){
  var m=document.createElement("p");m.className="warn";
@@ -598,7 +907,11 @@ load().then(function(data){
  var first=null;D.tracks.tracks.forEach(function(t){if(!first&&t.ready&&D.data[t.id])first=t.id});
  var k=first&&D.data[first].inputs;
  $("data-msg").textContent=k?"규칙 데이터: "+(k.source||"")+" / 갱신 "+(k.updated||"")+(D.from==="bundle"?" (묶음 파일에서 읽음)":""):"";
- safe(function(){selectTrack(first||D.tracks.tracks[0].id);showView()});
+ loadLocal();
+ SY.repo=lsGet("repo")||"";SY.token=lsGet("token")||"";
+ GUIDE.track=first||D.tracks.tracks[0].id;
+ safe(function(){useTrack(GUIDE.track,null);GUIDE.V=V;FEE=GUIDE.fees;showView()});
+ pull();
 },function(err){
  $("data-msg").textContent="";
  fail(Error("규칙 데이터를 읽지 못했습니다. "+(err&&err.message?err.message:err)));
