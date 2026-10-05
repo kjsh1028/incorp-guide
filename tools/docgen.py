@@ -85,6 +85,7 @@ def build(kind, case, lang):
         if not off.get("auditor"): x = drop(x, ">A6<", "tr")
     if kind == "progress":
         r = case["report"]; v["report_no"] = r["no"]; v["next_plan"] = L(r.get("next_plan"), lang)
+        v["schedule_note"] = L(r.get("schedule_note"), lang)
         none = "(없음)" if lang == "ko" else "（无）"
         done = [L(d, lang) for d in r.get("done", [])] or [none]
         x = repeat(x, "done", "p", 2, done, lambda p, k, it: p.replace(">1.<", ">%d.<" % k, 1).replace("{{done_1}}", "{{done_%d}}" % k))

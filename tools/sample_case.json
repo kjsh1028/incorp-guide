@@ -10,6 +10,7 @@
   "requests": [{"item": {"ko": "필요 정보 회신", "zh": "回复所需信息"}, "note": {"ko": "★ 표시 항목 우선", "zh": "优先回复★事项"}},
                {"item": {"ko": "B 서류 스캔본 발송", "zh": "发送B类文件扫描件"}, "note": {"ko": "공증 불요", "zh": "无需公证"}}],
   "next_plan": {"ko": "회신 내용에 따라 정관과 서명 서류를 작성합니다.", "zh": "根据贵司回复起草公司章程及签署文件。"},
+  "schedule_note": {"ko": "ODI 진행을 전제로 한 일정이며, 매주 갱신합니다.", "zh": "时间表以ODI备案进度为前提，本所将每周更新。"},
   "schedule": [{"when": {"ko": "10월 3주", "zh": "10月第3周"}, "status": "doing"}, {"when": {"ko": "10월 4주", "zh": "10月第4周"}, "status": "todo"},
                {"when": {"ko": "11월", "zh": "11月"}, "status": "todo"}, {"when": {"ko": "진행 중", "zh": "办理中"}, "status": "doing"},
                {"when": {"ko": "ODI 완료 후", "zh": "ODI完成后"}, "status": "todo"}, {"when": {"ko": "송금 후 1~2주", "zh": "汇款后1～2周"}, "status": "todo"},

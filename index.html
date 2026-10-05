@@ -826,7 +826,7 @@ function buildXml(kind,x,d,firm,lang){
  }
  if(kind==="progress"){
   var r=d.report||{}, none=lang==="ko"?"(없음)":"（无）";
-  v.report_no=r.no;v.next_plan=Lg(r.next_plan,lang);
+  v.report_no=r.no;v.next_plan=Lg(r.next_plan,lang);v.schedule_note=Lg(r.schedule_note,lang);
   var done=(r.done||[]).map(function(z){return Lg(z,lang)});if(!done.length)done=[none];
   x=repeatTag(x,"done","p",2,done,function(pp,k){return pp.replace(">1.<",">"+k+".<").split("{{done_1}}").join("{{done_"+k+"}}")});
   done.forEach(function(it,k){v["done_"+(k+1)]=it});
@@ -898,8 +898,9 @@ function renderGen(cs,od){
 /* ---------- 진행 보고 ----------
    사건 기록의 절차 상태로 초안을 채운다. 초안(cs.pdraft)은 화면에서 고칠 수 있고 "자동으로 다시 채우기"로 되돌린다.
    - 완료 항목: 지난 보고 뒤에 끝난 단계 중 고객용 이름(process.json 의 report)이 있는 것
-   - 협조 요청: 바로 할 차례인 단계 중 고객이 하는 것
-   - 다음 계획: 바로 할 차례인 단계 중 율촌이 하는 것
+   - 협조 요청: 바로 할 차례인 단계 중 고객 협조 문구(process.json 의 ask)가 있거나 고객이 하는 것
+   - 다음 계획: 바로 할 차례인 나머지 단계(율촌이 하는 것)
+   - 일정 표 아래 주석: outputs.json 의 schedule_note 기본값(사건마다 고칠 수 있음)
    - 초안을 직접 고치기 전(edited 없음)에는 볼 때마다 최신 절차 상태로 다시 채운다. 예상 시기(when)는 다시 채워도 남긴다.
    - 일정 표: outputs.json 의 milestones 로 행마다 완료·진행·예정을 정한다 */
 function lastReport(cs){var r=cs.reports||[];return r.length?r[r.length-1]:null}
@@ -909,13 +910,17 @@ function pAuto(cs,c,p,od){
  var rs=p.on.filter(function(s){return s.report});
  var done=rs.filter(function(s){return st[s.id]&&String(st[s.id])>since});
  var nxt=rs.filter(function(s){return nextIds[s.id]});
- var cl=nxt.filter(function(s){return (s.actor||[]).indexOf("client")>=0}), us=nxt.filter(function(s){return (s.actor||[]).indexOf("client")<0});
+ function isAsk(s){return s.ask||(s.actor||[]).indexOf("client")>=0}
+ var cl=nxt.filter(isAsk), us=nxt.filter(function(s){return !isAsk(s)});
  function lines(list,lang){return list.map(function(s){return s.report[lang]}).join("\n")}
+ function asks(lang){return cl.map(function(s){var a=s.ask;return a?(a.item[lang]+(a.note[lang]?" | "+a.note[lang]:"")):s.report[lang]}).join("\n")}
+ var sn=od.schedule_note||{};
  var when={};
  return {no:(cs.reports||[]).length+1,reply_by:addDays(7),
-  done_ko:lines(done,"ko"),done_zh:lines(done,"zh"),req_ko:lines(cl,"ko"),req_zh:lines(cl,"zh"),
-  next_ko:us.length?"다음으로 "+us.map(function(s){return s.report.ko}).join(", ")+"을(를) 진행할 예정입니다.":"",
-  next_zh:us.length?"下一步，我所将推进"+us.map(function(s){return s.report.zh}).join("、")+"。":"",
+  done_ko:lines(done,"ko"),done_zh:lines(done,"zh"),req_ko:asks("ko"),req_zh:asks("zh"),
+  next_ko:us.length?"이어서 다음 업무를 진행합니다: "+us.map(function(s){return s.report.ko}).join(", ")+".":"",
+  next_zh:us.length?"接下来，本所将推进："+us.map(function(s){return s.report.zh}).join("、")+"。":"",
+  note_ko:(cs.pdraft&&cs.pdraft.note_ko)||sn.ko||"",note_zh:(cs.pdraft&&cs.pdraft.note_zh)||sn.zh||"",
   when:(cs.pdraft&&cs.pdraft.when)||when};
 }
 function pDraft(cs,c,p,od){
@@ -939,8 +944,10 @@ function reportOf(pd){
  var od=outDoc("progress"), c=ctx(), p=plan(c), cs=curCase(), ms=msStatus(cs,c,p,od), na=od.not_applicable||{ko:"해당 없음",zh:"不适用"};
  return {no:pd.no,done:pairLines(pd.done_ko,pd.done_zh),
   requests:pairLines(pd.req_ko,pd.req_zh).map(function(x){var a=x.ko.split("|"),b=x.zh.split("|");return {item:{ko:a[0].trim(),zh:b[0].trim()},note:{ko:(a[1]||"").trim(),zh:(b[1]||"").trim()}}}),
-  next_plan:{ko:pd.next_ko,zh:pd.next_zh},
-  schedule:ms.map(function(stt,i){var w=(pd.when||{})[i+1]||{};return stt===null?{when:na}:{when:{ko:w.ko||"",zh:w.zh||""},status:stt}})};
+  next_plan:{ko:pd.next_ko,zh:pd.next_zh},schedule_note:{ko:pd.note_ko,zh:pd.note_zh},
+  schedule:ms.map(function(stt,i){var w=(pd.when||{})[i+1]||{};
+   if(stt===null)return {when:na};
+   return {when:{ko:w.ko||(stt==="done"?"완료":""),zh:w.zh||(stt==="done"?"已完成":"")},status:stt}})};
 }
 var MSL={done:"완료",doing:"진행",todo:"예정"};
 function renderProgress(cs,c,p){
@@ -955,12 +962,13 @@ function renderProgress(cs,c,p){
   +ta("done_ko","완료 항목 (국문, 한 줄에 하나)")+ta("done_zh","완료 항목 (중문, 국문과 같은 순서로)")
   +ta("req_ko","귀사 협조 요청 (국문, 한 줄에 하나. 설명은 | 뒤에)","예: 필요 정보 회신 | ★ 표시 항목 우선")+ta("req_zh","귀사 협조 요청 (중문)","例：回复所需信息 | 优先回复★事项")
   +ta("next_ko","다음 계획 (국문)")+ta("next_zh","다음 계획 (중문)")
-  +'<h3 style="margin-top:14px">일정 표 (상태는 절차 체크로 자동)</h3>'
+  +'<h3 style="margin-top:14px">일정 표 (예상 시기)</h3><p class="hint">상태 표시는 화면에서만 보입니다. 끝난 단계는 비워 두면 "완료"로 채워집니다.</p>'
   +od.milestones.map(function(m,i){var w=(pd.when||{})[i+1]||{}, stt=ms[i];
    return '<div class="q"><span class="lab">'+(i+1)+'. '+esc(m.label)+' <span class="tag'+(stt==="done"?' ok':'')+'" style="border:1px solid var(--line)">'+(stt?MSL[stt]:"해당 없음")+'</span></span>'
     +(stt?'<div class="row"><input type="text" data-pf="when.'+(i+1)+'.ko" value="'+esc(w.ko||"")+'" placeholder="예상 시기 (예: 10월 3주)"><input type="text" data-pf="when.'+(i+1)+'.zh" value="'+esc(w.zh||"")+'" placeholder="中文 (例：10月第3周)"></div>':'')+'</div>';
   }).join("")
-  +'<p class="hint">중문 단계 이름은 Claude 초안입니다. 보내기 전에 확인해 주세요.</p>'
+  +ta("note_ko","일정 표 아래 주석 (국문)")+ta("note_zh","일정 표 아래 주석 (중문)")
+  +'<p class="hint">중문 단계 이름은 Claude 초안입니다(선례 C 발송본에 있는 용어는 맞췄습니다). 보내기 전에 확인해 주세요.</p>'
   +'<div class="row"><button class="act" id="g-make" type="button">중문·국문 진행 보고 만들기</button><button class="act ghost" id="g-reset" type="button">자동으로 다시 채우기</button></div>';
 }
 function reportDue(cs){
