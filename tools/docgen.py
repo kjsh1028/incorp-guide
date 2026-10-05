@@ -194,6 +194,8 @@ def read(case, path):
     if got.get("capital_krw"): inp["cap"] = got["capital_krw"]
     if got.get("head_office_region"): inp["zone"] = "other" if got["head_office_region"] == "outside" else "over"
     if got.get("office_type"): inp["off"] = "indep"
+    if got.get("office_type") and got["office_type"] != "independent_lease":
+        review.append("6 사무실 형태: 회신은 '%s'인데 화면에는 '독립 사무실'로 넣었음. 직접 확인" % {"shared_private_room": "공유오피스 독립실", "kotra_ikp": "KOTRA IKP"}.get(got["office_type"], got["office_type"]))
     rk = (off.get("rep_director") or {}).get("resident_in_korea")
     if rk is not None: inp["d8"] = bool(rk)
     review.append("대표이사 거주지·신분증 유형, 이사가 2명 이상인 경우의 이사 수, 제한 업종 여부는 서식만으로 판단할 수 없어 직접 확인")

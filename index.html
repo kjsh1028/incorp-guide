@@ -184,7 +184,7 @@ tfoot td{font-weight:700;border-bottom:0}
     <details id="r-box" style="margin-top:16px"><summary style="cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center">📨 자료요청서 만들기</summary>
       <section style="margin-top:6px">
         <div id="r-fit"></div>
-        <div class="q"><label for="r-cn">고객사 중문 정식 명칭</label><input id="r-cn" data-cf="client_cn" type="text" style="max-width:100%"></div>
+        <div class="q"><label for="r-cn">고객사 중문 정식 명칭</label><input id="r-cn" data-cf="client_cn" type="text" style="max-width:none"></div>
         <div class="q"><label for="r-short">약칭 (파일 이름에 씁니다)</label><input id="r-short" data-cf="client_short" type="text"></div>
         <div class="q"><label for="r-due">회신 기한</label><input id="r-due" data-cf="reply_by" type="date"></div>
         <div class="q"><span class="lab">다른 출자 후보 (있을 때만)</span>
@@ -192,6 +192,14 @@ tfoot td{font-weight:700;border-bottom:0}
           <p class="hint">고객이 출자 주체를 고를 수 있게 요청서에 선택지로 넣습니다.</p></div>
         <button class="act" id="r-make" type="button">중문·국문 자료요청서 만들기</button>
         <div id="r-out"></div>
+      </section>
+    </details>
+    <details id="i-box" style="margin-top:8px"><summary style="cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center">📥 고객 회신 올리기</summary>
+      <section style="margin-top:6px">
+        <p class="hint">고객이 채워 보낸 자료요청서(docx)를 고르면 내용을 읽어 기본 정보를 채웁니다. 반영하기 전에 확인 화면이 나옵니다. 파일은 이 기기에서만 읽고 어디에도 올리지 않습니다.</p>
+        <input type="file" id="i-file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="margin-top:8px;max-width:100%">
+        <div id="i-out"></div>
+        <div id="i-saved"></div>
       </section>
     </details>
     <div id="k-warns"></div>
@@ -709,6 +717,8 @@ function renderCaseDash(c,p){
  var od=outDoc("request");
  $("r-fit").innerHTML=!od?'<p class="warn">이 설립 유형에는 자료요청서 틀이 아직 없습니다.</p>':(c&&od.fits&&!when(od.fits,c)?'<p class="warn">'+esc(od.fits_note)+tagChk()+'</p>':'');
  if(!GEN.files||GEN.id!==cs.id)$("r-out").innerHTML="";
+ if(!READ||READ.id!==cs.id)$("i-out").innerHTML="";
+ renderReplySaved(cs);
  $("k-done").textContent=cs.status==="done"?"진행 중으로 되돌리기":"사건 완료 처리";
 }
 function renderOut(){
@@ -824,6 +834,158 @@ function renderGen(cs,od){
   +'<button class="act ghost" type="button" data-step="'+esc(od.step)+'" data-case="'+esc(cs.id)+'">'+(done?'✓ 보냄으로 표시됨 ('+esc(done)+')':'고객에게 보냈으면 눌러 주세요 ('+esc(od.step)+' 완료)')+'</button></div>';
 }
 
+/* ---------- 고객 회신 읽기 ----------
+   tools/docgen.py read 와 같은 방식. 표·행·칸은 python-docx 처럼 읽는다
+   (본문 바로 아래 표만, 가로 병합 칸은 되풀이, 세로 병합 칸은 위 칸 내용). 둘 중 하나를 고치면 다른 쪽도 고친다. */
+var WNS="http://schemas.openxmlformats.org/wordprocessingml/2006/main", READ=null;
+function wk(el,name){var r=[];for(var n=el?el.firstChild:null;n;n=n.nextSibling)if(n.nodeType===1&&n.namespaceURI===WNS&&n.localName===name)r.push(n);return r}
+function wv(el){return el?el.getAttributeNS(WNS,"val"):null}
+function runText(r){var t="";for(var n=r.firstChild;n;n=n.nextSibling){if(n.nodeType!==1||n.namespaceURI!==WNS)continue;var l=n.localName;if(l==="t")t+=n.textContent;else if(l==="tab"||l==="ptab")t+="\t";else if(l==="br"||l==="cr")t+="\n";else if(l==="noBreakHyphen")t+="-"}return t}
+function parText(p){var t="";for(var n=p.firstChild;n;n=n.nextSibling){if(n.nodeType!==1||n.namespaceURI!==WNS)continue;if(n.localName==="r")t+=runText(n);else if(n.localName==="hyperlink")wk(n,"r").forEach(function(r){t+=runText(r)})}return t}
+function cellText(tc){return wk(tc,"p").map(parText).join("\n").trim()}
+function readTables(xml){
+ var doc=new DOMParser().parseFromString(xml,"application/xml"), body=doc.getElementsByTagNameNS(WNS,"body")[0];
+ return wk(body,"tbl").map(function(tbl){
+  var grid=[];
+  wk(tbl,"tr").forEach(function(tr,ri){
+   var cells=[];
+   wk(tr,"tc").forEach(function(tc){
+    var pr=wk(tc,"tcPr")[0], span=+(wv(wk(pr,"gridSpan")[0])||1), vm=wk(pr,"vMerge")[0];
+    var cont=vm&&(wv(vm)||"continue")==="continue", txt=cellText(tc);
+    for(var k=0;k<span;k++){var col=cells.length;cells.push(cont&&ri>0&&grid[ri-1][col]!==undefined?grid[ri-1][col]:txt)}
+   });
+   grid.push(cells);
+  });
+  return grid;
+ });
+}
+var UNCHK="□☐", CHKD="☑☒■√✓✔●▣◼";
+function optionsOf(t){var re=new RegExp("(["+UNCHK+CHKD+"])\\s*([^"+UNCHK+CHKD+"\\n]*)","g"),o=[],m;while((m=re.exec(t)))o.push([CHKD.indexOf(m[1])>=0,m[2].replace(/^[　 ]+|[　 ]+$/g,"")]);return o}
+function isBlank(t){return String(t||"").replace(/[_＿\s　]/g,"")===""}
+function money(t){
+ t=t.replace(/,/g,"").replace(/ /g,"");
+ var m=/(\d+(?:\.\d+)?)(亿|억)/.exec(t);
+ if(m){var v=parseFloat(m[1])*1e8,m2=/(?:亿|억)(\d+(?:\.\d+)?)(万|만)/.exec(t);return Math.trunc(v+(m2?parseFloat(m2[1])*1e4:0))}
+ m=/(\d+(?:\.\d+)?)(万|만)/.exec(t);if(m)return Math.trunc(parseFloat(m[1])*1e4);
+ m=/(\d{6,})/.exec(t);return m?parseInt(m[1],10):null;
+}
+function trimSet(t,chars){var re=new RegExp("^["+chars+"]+|["+chars+"]+$","g");return t.replace(re,"")}
+function readReply(T2,so){
+ var got={},review=[];
+ function pick(key,text){var o=optionsOf(text),sel=[];o.forEach(function(x,i){if(x[0])sel.push(i)});
+  if(!sel.length){review.push(key+": 체크 표시를 읽지 못함");return [null,o]}
+  if(sel.length>1)review.push(key+": 둘 이상 체크됨");
+  return [sel[0],o]}
+ var info={};
+ (T2[0]||[]).slice(1).forEach(function(r){var m=/(\d+)\./.exec(r[0]||"");if(m)info[+m[1]]=r[1]||""});
+ var x=pick("1 출자주체",info[1]||""), i=x[0], o=x[1];
+ if(i!==null){if(i<so.length){got.shareholder=Lg(so[i].label,"ko");got.shareholder_type=so[i].type}else{got.shareholder="기타: "+o[i][1];review.push("1 출자주체: '기타' 선택. 유형을 직접 판단")}}
+ var t=info[2]||"", m=/(?:후보|备选)\s*1\s*([\s\S]*?)[　\s]*(?:후보|备选)\s*2\s*([\s\S]*?)\s*(?:\n|영문|英文)/.exec(t);
+ if(m){got.name_kr_1=isBlank(m[1])?null:trimSet(m[1]," _　");got.name_kr_2=isBlank(m[2])?null:trimSet(m[2]," _　")}
+ m=/(?:영문|英文)\s*[:：]\s*(.*)/.exec(t);
+ if(m&&!isBlank(m[1]))got.name_en=trimSet(m[1]," _");
+ if(!got.name_kr_1)review.push("2 상호: 한글 상호 미기입");
+ got.capital_krw=money((info[3]||"").split(/[(（]/)[0]);
+ if(got.capital_krw===null)review.push("3 자본금: 미기입 또는 판독 불가");
+ x=pick("4 1주의 금액",info[4]||"");i=x[0];o=x[1];
+ if(i!==null)got.par_value=i<2?[5000,10000][i]:o[i][1];
+ var bp=(info[5]||"").split("※")[0].trim();got.business_purposes=bp||null;
+ if(!bp)review.push("5 사업목적: 미기입");
+ var ln=(info[6]||"").split("\n").concat(["",""]);
+ [["6 본점 지역",ln[0],["seoul","overcrowding_other","outside",null],"head_office_region"],["6 사무실 형태",ln[1],["independent_lease","shared_private_room","kotra_ikp",null],"office_type"]].forEach(function(q){
+  var y=pick(q[0],q[1]);if(y[0]!==null&&y[0]<q[2].length)got[q[3]]=q[2][y[0]];
+ });
+ x=pick("7 공고방법",info[7]||"");got.notice_method=x[0]===null?null:["homepage_then_newspaper","newspaper"][Math.min(x[0],1)];
+ x=pick("8 ODI",info[8]||"");got.odi_status=x[0]===null?null:["done","in_progress","not_started"][Math.min(x[0],2)];
+ x=pick("9 선호 은행",info[9]||"");
+ if(x[0]!==null)got.preferred_bank=x[0]===0?(trimSet(x[1][0][1].split(/[:：]/).pop()," _")||null):null;
+ var c10=(info[10]||"").replace(/^[\s\S]*?[:：]/,"").trim();got.contact=c10||null;
+ if(!c10)review.push("10 연락 담당자: 미기입");
+ var off={},keys=["name_en","name_zh","nationality_dob","passport_no","address","resident_in_korea"];
+ [[1,"rep_director"],[2,"director"],[3,"auditor"]].forEach(function(cr){
+  var d={};
+  keys.forEach(function(k,ki){
+   var row=(T2[1]||[])[ki+1];if(!row)return;
+   var val=row[cr[0]]||"";
+   if(k==="resident_in_korea"){var sel=[];optionsOf(val).forEach(function(z,j){if(z[0])sel.push(j)});d[k]=sel.length?sel[0]===0:null}
+   else d[k]=val||null;
+  });
+  if(keys.slice(0,5).some(function(k){return d[k]}))off[cr[1]]=d;
+ });
+ got.officers=off;
+ if(!off.rep_director)review.push("임원: 대표이사 정보 미기입");
+ else if(!off.rep_director.address)review.push("임원: 대표이사 주소 미기입(★ 항목)");
+ T2.forEach(function(tb){
+  if(tb.length===1&&tb[0].length===1){
+   var oo=optionsOf(tb[0][0]);
+   if(oo.length===4){var sel=[];oo.forEach(function(z,j){if(z[0])sel.push(j)});
+    got.pre_registration_cost_method=sel.length?["yulchon_advance","client_remit","korean_affiliate","other"][sel[0]]:null;
+    if(!sel.length)review.push("등기 전 비용 지급 방식: 미선택")}
+  }
+ });
+ var inp={dir:1+(off.director?1:0),aud:!!off.auditor};
+ if(got.shareholder_type)inp.sh=got.shareholder_type;
+ if(got.capital_krw)inp.cap=got.capital_krw;
+ if(got.head_office_region)inp.zone=got.head_office_region==="outside"?"other":"over";
+ if(got.office_type)inp.off="indep";
+ if(got.office_type&&got.office_type!=="independent_lease")review.push("6 사무실 형태: 회신은 '"+({shared_private_room:"공유오피스 독립실",kotra_ikp:"KOTRA IKP"}[got.office_type]||got.office_type)+"'인데 화면에는 '독립 사무실'로 넣었음. 직접 확인");
+ var rk=(off.rep_director||{}).resident_in_korea;
+ if(rk!=null)inp.d8=!!rk;
+ review.push("대표이사 거주지·신분증 유형, 이사가 2명 이상인 경우의 이사 수, 제한 업종 여부는 서식만으로 판단할 수 없어 직접 확인");
+ return {answers:got,program_inputs:inp,review:review};
+}
+/* 사건 기록에는 회신 내용 중 신분 정보(여권번호, 주소, 국적·생년월일)를 남기지 않는다. 원본 회신 파일은 드라이브에 둔다. */
+function replyForRecord(a){
+ var c=JSON.parse(JSON.stringify(a));
+ Object.keys(c.officers||{}).forEach(function(k){["passport_no","address","nationality_dob"].forEach(function(f){delete c.officers[k][f]})});
+ return c;
+}
+var RL={head_office_region:{seoul:"서울",overcrowding_other:"서울 외 과밀억제권역",outside:"과밀억제권역 외"},
+ office_type:{independent_lease:"단독 임차",shared_private_room:"공유오피스 독립실",kotra_ikp:"KOTRA IKP"},
+ notice_method:{homepage_then_newspaper:"홈페이지(불가 시 신문)",newspaper:"신문"},
+ odi_status:{done:"완료",in_progress:"진행 중",not_started:"미착수"},
+ pre_registration_cost_method:{yulchon_advance:"율촌 대납",client_remit:"고객 선송금",korean_affiliate:"한국 관계사 지급",other:"기타"}};
+function replyRows(a){
+ var r=[];function add(k,v){if(v!=null&&v!=="")r.push([k,v])}
+ add("출자주체",a.shareholder);
+ add("상호 후보",[a.name_kr_1,a.name_kr_2].filter(Boolean).join(" / "));add("영문 상호",a.name_en);
+ add("자본금",a.capital_krw?won(a.capital_krw):null);add("1주의 금액",a.par_value?(typeof a.par_value==="number"?won(a.par_value):a.par_value):null);
+ add("사업목적",a.business_purposes);
+ ["head_office_region","office_type","notice_method","odi_status"].forEach(function(k){add({head_office_region:"본점 지역",office_type:"사무실 형태",notice_method:"공고방법",odi_status:"ODI"}[k],a[k]?RL[k][a[k]]:null)});
+ add("선호 은행",a.preferred_bank);add("연락 담당자",a.contact);
+ var on={rep_director:"대표이사",director:"이사",auditor:"감사"};
+ Object.keys(a.officers||{}).forEach(function(k){var o=a.officers[k];add(on[k]||k,[o.name_en,o.name_zh].filter(Boolean).join(" / ")+(o.resident_in_korea==null?"":o.resident_in_korea?" (한국 상주)":" (한국 비상주)"))});
+ add("등기 전 비용",a.pre_registration_cost_method?RL.pre_registration_cost_method[a.pre_registration_cost_method]:null);
+ return r;
+}
+function kvHtml(rows){return '<dl class="kv" style="grid-template-columns:6.5em 1fr">'+rows.map(function(x){return '<dt>'+esc(x[0])+'</dt><dd style="white-space:pre-wrap">'+esc(x[1])+'</dd>'}).join("")+'</dl>'}
+function readReplyFile(file,cs){
+ return loadScript("lib/jszip.min.js").then(function(){return file.arrayBuffer()}).then(function(buf){return JSZip.loadAsync(buf)}).then(function(z){
+  var f=z.file("word/document.xml");if(!f)throw Error("Word 파일(docx)이 아닌 것 같습니다.");
+  return f.async("string");
+ }).then(function(xml){
+  var si=shInput(T), first=si?(si.options.filter(function(o){return o.value===V.shareholder_type})[0]||{}):{};
+  var so=[{label:cs.client_cn||"",type:(first.alias&&first.alias[0])||first.value||"cn"}];
+  if(cs.alt_ko||cs.alt_zh)so.push({label:{ko:cs.alt_ko,zh:cs.alt_zh},type:null});
+  var r=readReply(readTables(xml),so);
+  if(r.answers.shareholder_type===null){delete r.answers.shareholder_type;r.review.unshift("1 출자주체: 다른 출자 후보를 골랐습니다. 주주 유형을 직접 고르세요")}
+  return r;
+ });
+}
+function renderReplyPreview(cs){
+ var r=READ.result, pv=importCase(r,true);
+ $("i-out").innerHTML='<h3 style="margin-top:14px">회신에서 읽은 내용</h3>'+kvHtml(replyRows(r.answers))
+  +'<h3 style="margin-top:14px">화면에 바뀌어 들어갈 값</h3>'+(pv.changes.length?kvHtml(pv.changes.map(function(c){return [c.label,c.from+" → "+c.to]})):'<p class="note">바뀌는 값이 없습니다.</p>')
+  +(pv.bad.length?'<p class="warn">선택지에 없는 값이라 채우지 않을 항목: '+esc(pv.bad.join(", "))+'</p>':'')
+  +'<div class="warn">직접 확인할 항목<ul class="plain">'+r.review.map(function(x){return '<li>'+esc(x)+'</li>'}).join("")+'</ul></div>'
+  +'<div class="row"><button class="act" id="i-apply" type="button">이대로 반영</button><button class="act ghost" id="i-cancel" type="button">취소</button></div>';
+}
+function renderReplySaved(cs){
+ var rp=cs.reply;
+ $("i-saved").innerHTML=rp?'<h3 style="margin-top:16px">반영한 회신 ('+esc(rp.read)+(rp.file?', '+esc(rp.file):'')+')</h3>'+kvHtml(replyRows(rp.answers))+'<p class="hint">여권번호·주소·생년월일은 사건 기록에 남기지 않습니다. 원본 회신 파일은 드라이브 사건 폴더의 01_자료요청·회신에 두세요.</p>'
+  +'<button class="act ghost" type="button" data-step="P2-3" data-case="'+esc(cs.id)+'">'+((cs.steps||{})["P2-3"]?'✓ 회신 검토 끝 ('+esc(cs.steps["P2-3"])+')':'회신 검토가 끝났으면 눌러 주세요 (P2-3 완료)')+'</button>':'';
+}
+
 /* ---------- GitHub 동기화 ----------
    리걸트랙과 같은 방식: 비공개 저장소의 파일 하나를 GitHub API로 읽고 쓴다.
    토큰은 이 기기 localStorage 에만 둔다(같은 github.io 주소의 다른 앱과 섞이지 않게 incorp: 를 붙인다). */
@@ -923,8 +1085,9 @@ function matchOpt(o,v){
  }
  return undefined;
 }
-function importCase(j){
- var pi=j.program_inputs||j, ans=j.answers||{}, n=0, bad=[];
+function fmtVal(i,v){if(v===""||v==null)return "-";if(i.type==="number")return /_krw$/.test(i.key)?won(Number(v)||0):String(v);return optsOf(i).length?plain(optLabel(i,v)):String(v)}
+function importCase(j,dry){
+ var pi=j.program_inputs||j, ans=j.answers||{}, n=0, bad=[], changes=[];
  T.inputs.inputs.forEach(function(i){
   var v;
   if(i.import_key&&pi[i.import_key]!=null)v=pi[i.import_key];
@@ -935,10 +1098,13 @@ function importCase(j){
   if(o.length){var hit=matchOpt(o,v);if(hit===undefined){bad.push(i.label+" ("+v+")");return}v=hit}
   else if(i.type==="number"){v=Number(v);if(!(v>=0)){bad.push(i.label);return}}
   else v=String(v);
-  V[i.key]=v;n++;
+  if(V[i.key]!==v)changes.push({label:i.short||plain(i.label),from:fmtVal(i,V[i.key]),to:fmtVal(i,v)});
+  n++;
+  if(dry)return;
+  V[i.key]=v;
   var el=$("in-"+i.key);if(el&&el.tagName==="INPUT")el.value=v;
  });
- return {n:n,bad:bad};
+ return {n:n,bad:bad,changes:changes};
 }
 
 /* ---------- 이벤트 ---------- */
@@ -982,6 +1148,13 @@ document.addEventListener("click",function(e){
   $("r-out").innerHTML='<p class="note">만드는 중입니다…</p>';b.disabled=true;
   makeDocs(od,cs).then(function(fs){GEN={id:cs.id,files:fs};renderGen(cs,od)},function(err){$("r-out").innerHTML='<p class="warn">'+esc(err.message||err)+'</p>'}).then(function(){b.disabled=false});
  }
+ else if(b.id==="i-apply"&&cs&&READ&&READ.id===cs.id){
+  var res=importCase(READ.result,false);
+  cs.reply={read:today(),file:READ.file,answers:replyForRecord(READ.result.answers)};
+  READ=null;$("i-file").value="";changed();safe(render);
+  $("i-out").innerHTML='<p class="note">'+res.n+'개 항목을 반영했습니다. 화면의 기본 정보를 한 번 더 확인해 주세요.</p>';
+ }
+ else if(b.id==="i-cancel"){READ=null;$("i-file").value="";$("i-out").innerHTML=""}
  else if(b.dataset.dl&&GEN.files){saveBlob(GEN.files[+b.dataset.dl])}
  else if(b.dataset.share&&GEN.files){
   var fl=GEN.files.map(function(f){return new File([f.blob],f.name,{type:f.blob.type})});
@@ -1022,6 +1195,12 @@ document.addEventListener("click",function(e){
    navigator.clipboard.writeText(txt).then(function(){copyMsg("안내 요약을 복사했습니다.")},function(){copyMsg("복사하지 못했습니다. 브라우저에서 클립보드 권한을 허용해 주세요.")});
   }catch(err){copyMsg("복사하지 못했습니다. 이 화면에서는 클립보드를 쓸 수 없습니다.")}
  }
+});
+document.addEventListener("change",function(e){
+ if(e.target.id!=="i-file"||!D)return;
+ var cs=curCase(), f=e.target.files&&e.target.files[0];if(!cs||!f)return;
+ $("i-out").innerHTML='<p class="note">읽는 중입니다…</p>';
+ readReplyFile(f,cs).then(function(r){READ={id:cs.id,file:f.name,result:r};renderReplyPreview(cs)},function(err){$("i-out").innerHTML='<p class="warn">읽지 못했습니다: '+esc(err.message||err)+'</p>'});
 });
 document.addEventListener("input",function(e){
  var el=e.target, cs=curCase();
