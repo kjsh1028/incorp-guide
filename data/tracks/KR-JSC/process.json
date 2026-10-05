@@ -79,7 +79,7 @@
 
     {"id": "P12-1", "task": "외국인투자기업 등록", "actor": ["lawyer", "legal_support"], "prereq": ["P9-3", "P10-5"], "output": "외국인투자기업 등록증명서", "days": null, "deadline": "납입 완료일부터 60일 이내", "applies": "is_fdi"},
     {"id": "P12-2", "task": "법인계좌 개설·자본금 전환", "actor": ["client", "legal_support"], "prereq": ["P11-1"], "output": "법인계좌", "days": [3, 5], "applies": "always", "note": "실제소유자 서류는 이 단계에서 요청"},
-    {"id": "P12-3", "task": "D-8 비자", "actor": ["client", "external"], "prereq": ["P12-1"], "output": "비자", "days": null, "applies": "d8_needed", "note": "독립 사무실 필요(R14)"},
+    {"id": "P12-3", "task": "D-8 비자", "actor": ["client", "external"], "prereq": ["P12-1"], "output": "비자", "days": null, "applies": "d8_needed", "status": "needs_check", "note": "독립 사무실 필요(R14)"},
 
     {"id": "P13-1", "task": "결과물 송부·설립 완료 안내", "actor": ["lawyer"], "prereq": ["P11-1", "P12-2"], "output": "완료 보고서", "days": [1, 1], "applies": "always"},
     {"id": "P13-2", "task": "잔금 청구·실비 정산", "actor": ["biz_support"], "prereq": ["P10-5"], "output": "청구서", "days": [1, 7], "applies": "always"},
