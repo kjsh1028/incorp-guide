@@ -1491,10 +1491,12 @@ document.addEventListener("click",function(e){
   CUR=null;scheduleSave();location.hash="#cases";
  }
  else if(b.id==="g-save"){
-  SY.repo=$("g-repo").value.trim().replace(/^https?:\/\/github\.com\//,"").replace(/\/+$/,"");
+  /* 저장소 칸을 비워 두면(흐린 예시 글자만 보이면) 예시 저장소로 연결한다 */
+  SY.repo=($("g-repo").value.trim()||$("g-repo").placeholder).replace(/^https?:\/\/github\.com\//,"").replace(/\/+$/,"");
   var tk=$("g-token").value.trim();if(tk)SY.token=tk;
   lsSet("repo",SY.repo);lsSet("token",SY.token||null);SY.sha=null;
-  $("g-msg").innerHTML='<p class="note">연결하는 중입니다. 위쪽 띠에 결과가 나옵니다.</p>';
+  if(!SY.token){$("g-msg").innerHTML='<p class="warn">토큰 칸이 비어 있습니다. github_pat_ 로 시작하는 토큰을 붙여 넣어 주세요.</p>';renderMore();return}
+  $("g-msg").innerHTML='<p class="note">'+esc(SY.repo)+' 에 연결하는 중입니다. 위쪽 띠에 결과가 나옵니다.</p>';
   renderMore();pull().then(function(){$("g-msg").innerHTML=""});
  }
  else if(b.id==="g-sync")pull();
